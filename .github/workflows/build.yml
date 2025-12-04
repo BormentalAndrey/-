@@ -1,4 +1,4 @@
-name: Python + Android Build
+name: Build KakDela P2P
 
 on:
   push:
@@ -10,43 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. Установить Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      # 2. Запуск твоего Python-кода
-      - name: Run Python project generator
-        run: |
-          python setup_project.py
+      - name: Generate project via Python
+        run: python setup_project.py
 
-      # 3. Установка JDK 17
-      - name: Setup JDK 17
+      - name: Show tree
+        run: ls -R .
+
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 4. Установить Gradle
-      - name: Install Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 8.6
+      - name: Make gradlew executable
+        run: chmod +x ./Kakdela-p2p/build_output/gradlew
 
-      # 5. Сборка APK
-      - name: Build Debug APK
-        working-directory: ./build_output
-        run: |
-          gradle assembleDebug --stacktrace --no-daemon
+      - name: Build APK
+        working-directory: ./Kakdela-p2p/build_output
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
 
-      # 6. Загрузка APK
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Android_Debug_APK
-          path: |
-            build_output/app/build/outputs/apk/debug/
+          name: Kakdela-debug.apk
+          path: Kakdela-p2p/build_output/app/build/outputs/apk/debug/
