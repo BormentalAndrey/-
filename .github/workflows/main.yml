@@ -1,0 +1,71 @@
+name: Unpack ZIP files
+
+on:
+  # Запускается при пуше (можно ограничить пути к *.zip)
+  push:
+    paths:
+      - '**/*.zip'
+  # Ручной запуск из Actions (workflow_dispatch)
+  workflow_dispatch: {}
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # токен используется если хотим пушить обратно
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Ensure unzip present
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y unzip || true
+
+      - name: Find first ZIP file
+        id: findzip
+        run: |
+          # ищем первый zip в корне и под-папках (макс глубина 5)
+          zipfile=$(find . -maxdepth 5 -type f -iname "*.zip" | sed '/^\.\/.github\//d' | head -n1 || true)
+          if [ -z "$zipfile" ]; then
+            echo "zipfile="
+            echo "No ZIP file found"
+            exit 0
+          fi
+          # убираем ведущие ./ если есть
+          zipfile="${zipfile#./}"
+          echo "Found zip: $zipfile"
+          echo "zipfile=$zipfile" >> $GITHUB_OUTPUT
+
+      - name: Unpack ZIP into unpacked/
+        if: steps.findzip.outputs.zipfile != ''
+        run: |
+          zipfile="${{ steps.findzip.outputs.zipfile }}"
+          echo "Unpacking $zipfile into ./unpacked/"
+          mkdir -p unpacked
+          # unzip с перезаписью
+          unzip -o "$zipfile" -d unpacked
+          echo "Contents of unpacked/:"
+          ls -la unpacked || true
+
+      - name: Commit and push unpacked contents (optional)
+        if: steps.findzip.outputs.zipfile != ''
+        run: |
+          # если не нужно пушить — закомментируй этот блок или убери этот шаг
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Добавляем распакованные файлы в индекс
+          git add -A unpacked
+
+          # Если нет изменений — exit 0
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "CI: Unpacked ${{ steps.findzip.outputs.zipfile }}"
+          # push в текущую ветку (actions/checkout уже настроил credentials)
+          git push origin HEAD
