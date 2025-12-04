@@ -1,3 +1,77 @@
-git add .github/workflows/build_and_scan.yml .github/scripts/scan_repo.py .github/scripts/fix_and_setup.py
-git commit -m "ci: add repo scanner, auto-fixer and build workflow"
-git push origin main
+name: Build and Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  scan_and_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # ---- SCAN REPOSITORY (выводит всё, что есть в проекте) ----
+      - name: Scan repository tree
+        run: |
+          echo "===== SCAN START =====" > scan_report.txt
+          echo "" >> scan_report.txt
+
+          echo "=== FILE TREE ===" >> scan_report.txt
+          find . -type f | sort >> scan_report.txt
+
+          echo "" >> scan_report.txt
+          echo "=== FILE CONTENTS ===" >> scan_report.txt
+
+          # показать содержимое всех файлов (кроме бинарных)
+          for f in $(find . -type f -not -path "./.git/*"); do
+            echo "----- $f -----" >> scan_report.txt
+            file "$f" >> scan_report.txt
+            echo "" >> scan_report.txt
+            if file "$f" | grep -q "text"; then
+              cat "$f" >> scan_report.txt
+            else
+              echo "[binary file skipped]" >> scan_report.txt
+            fi
+            echo "" >> scan_report.txt
+          done
+
+          echo "===== SCAN END =====" >> scan_report.txt
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-scan
+          path: scan_report.txt
+
+      # ---- ANDROID BUILD ----
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kakdela-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
