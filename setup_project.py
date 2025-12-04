@@ -209,8 +209,71 @@ def main():
     write("gradlew", """
         #!/usr/bin/env bash
         echo "Gradle wrapper placeholder. CI uses gradle action which installs Gradle."
-        exit 0
+        exit 0import urllib.request
+
+def create_real_gradle_wrapper():
+    print("Создаю настоящий Gradle Wrapper...")
+
+    # 1. Создать папку wrapper
+    wrapper_dir = os.path.join(project_dir, "gradle", "wrapper")
+    os.makedirs(wrapper_dir, exist_ok=True)
+
+    # 2. Скачать официальный gradle-wrapper.jar
+    jar_url = "https://services.gradle.org/distributions/gradle-8.6-bin.zip"
+    jar_path = os.path.join(wrapper_dir, "gradle-wrapper.jar")
+
+    try:
+        print("Скачиваю gradle-wrapper.jar...")
+        urllib.request.urlretrieve(
+            "https://raw.githubusercontent.com/gradle/gradle/master/subprojects/wrapper/src/main/java/org/gradle/wrapper/GradleWrapperMain.java",
+            jar_path
+        )
+    except:
+        print("Ошибка скачивания JAR — требуется интернет.")
+        print("Если запускаешь в GitHub Actions — пройдет нормально.")
+    
+    # 3. Создать gradle-wrapper.properties
+    props = """distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip
+"""
+    with open(os.path.join(wrapper_dir, "gradle-wrapper.properties"), "w") as f:
+        f.write(props)
+
+    # 4. Создать gradlew
+    gradlew_content = """#!/usr/bin/env sh
+##############################################################################
+#
+#   Gradle start script
+#
+##############################################################################
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+java -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
+"""
+    gradlew_path = os.path.join(project_dir, "gradlew")
+    with open(gradlew_path, "w") as f:
+        f.write(gradlew_content)
+
+    # Сделать исполняемым
+    st = os.stat(gradlew_path)
+    os.chmod(gradlew_path, st.st_mode | stat.S_IEXEC)
+
+    # 5. Создать gradlew.bat (Windows)
+    gradlew_bat_content = """@echo off
+set DIR=%~dp0
+java -jar "%DIR%gradle\\wrapper\\gradle-wrapper.jar" %*
+"""
+    with open(os.path.join(project_dir, "gradlew.bat"), "w") as f:
+        f.write(gradlew_bat_content)
+
+    print("Gradle Wrapper успешно создан!")
+
+# --- вызвать функцию ---
+create_real_gradle_wrapper()
     """, make_executable=True)
+    
 
     print("Генерация завершена. Проверь файлы, закоммить и запушь.")
     print("После пуша Actions запустится автоматически (workflow .github/workflows/build.yml).")
