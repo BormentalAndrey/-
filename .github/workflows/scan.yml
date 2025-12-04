@@ -1,0 +1,46 @@
+name: Repository Scanner
+
+on:
+  workflow_dispatch:     # Запуск вручную из GitHub Actions
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create report directory
+        run: mkdir scan_report
+
+      - name: Scan file structure
+        run: |
+          echo "===== FILE TREE =====" > scan_report/report.txt
+          echo "" >> scan_report/report.txt
+          tree -a >> scan_report/report.txt
+
+      - name: Scan all files with content
+        run: |
+          echo "" >> scan_report/report.txt
+          echo "===== FULL FILE CONTENTS =====" >> scan_report/report.txt
+          echo "" >> scan_report/report.txt
+
+          # Перебираем ВСЕ файлы в репозитории
+          for f in $(find . -type f ! -path "./scan_report/*"); do
+            echo "" >> scan_report/report.txt
+            echo "----- FILE: $f -----" >> scan_report/report.txt
+            echo "" >> scan_report/report.txt
+            sed -e 's/\x0//g' "$f" >> scan_report/report.txt || echo "[BINARY FILE]" >> scan_report/report.txt
+            echo "" >> scan_report/report.txt
+          done
+
+      - name: Pack report into ZIP
+        run: |
+          zip -r repository_scan.zip scan_report
+
+      - name: Upload scan ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-scan
+          path: repository_scan.zip
