@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Python + Android Build
 
 on:
   push:
@@ -13,24 +13,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 1. Установить Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 2. Запуск твоего Python-кода
+      - name: Run Python project generator
+        run: |
+          python setup_project.py
+
+      # 3. Установка JDK 17
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # 4. Установить Gradle
       - name: Install Gradle
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 8.6
 
+      # 5. Сборка APK
       - name: Build Debug APK
+        working-directory: ./build_output
         run: |
-          cd Kakdela-p2p
           gradle assembleDebug --stacktrace --no-daemon
 
-      - name: Upload APK
+      # 6. Загрузка APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Kakdela-debug-apk
-          path: Kakdela-p2p/app/build/outputs/apk/debug/
+          name: Android_Debug_APK
+          path: |
+            build_output/app/build/outputs/apk/debug/
