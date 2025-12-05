@@ -1,25 +1,89 @@
-name: Run Python Script
+#!/usr/bin/env python3
+import os
+import subprocess
+import sys
+from pathlib import Path
 
-on:
-  push:
-    branches: [ main ]
 
-jobs:
-  run-python:
-    runs-on: ubuntu-latest
+def print_status(message):
+    print(f"\n{message}\n" + "="*50)
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+def check_required_files():
+    """Проверяем наличие минимально необходимых файлов для Android-проекта"""
+    required = [
+        "app/build.gradle.kts",
+        "app/src/main/AndroidManifest.xml",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradlew",
+    ]
+    missing = [f for f in required if not Path(f).exists()]
 
-      - name: Install dependencies (если есть)
-        run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    if missing:
+        print_status("ОШИБКА: Отсутствуют важные файлы проекта!")
+        for f in missing:
+            print(f"   ✗ Не найден: {f}")
+        print("\nУбедитесь, что в репозитории есть:")
+        print("   • gradlew + gradlew.bat + папка gradle/")
+        print("   • settings.gradle.kts")
+        print("   • build.gradle.kts")
+        print("   • app/build.gradle.kts")
+        print("   • app/src/main/AndroidManifest.xml")
+        sys.exit(1)
+    else:
+        print_status("Всё необходимое есть — можно собирать APK")
 
-      - name: Run your Python script
-        run: python setup_project.py
+
+def make_gradlew_executable():
+    """Делаем gradlew исполняемым (обязательно на Linux-раннерах GitHub Actions)"""
+    gradlew = Path("gradlew")
+    if gradlew.exists():
+        gradlew.chmod(0o755)
+        print("gradlew сделан исполняемым")
+    else:
+        print("gradlew не найден!")
+        sys.exit(1)
+
+
+def build_apk():
+    """Запускаем сборку Debug APK"""
+    print_status("Запуск сборки APK через Gradle Wrapper")
+    cmd = ["./gradlew", "clean", "assembleDebug", "--stacktrace", "--info"]
+    
+    result = subprocess.run(cmd, cwd=".")
+    
+    if result.returncode == 0:
+        apk_path = "app/build/outputs/apk/debug/app-debug.apk"
+        if Path(apk_path).exists():
+            print_status(f"APK УСПЕШНО СОБРАН!\nПуть: {apk_path}")
+        else:
+            print_status("Сборка прошла, но APK не найден в ожидаемом месте")
+            sys.exit(1)
+    else:
+        print_status("ОШИБКА СБОРКИ APK")
+        sys.exit(1)
+
+
+def main():
+    print_status("Запуск setup_project.py — подготовка и сборка Android-проекта")
+
+    # 1. Проверяем, что мы в правильной папке и всё на месте
+    if not Path("app").exists():
+        print_status("Папка 'app' не найдена! Это не Android-проект?")
+        sys.exit(1)
+
+    # 2. Проверяем наличие всех нужных файлов
+    check_required_files()
+
+    # 3. Делаем gradlew исполняемым
+    make_gradlew_executable()
+
+    # 4. Собираем APK
+    build_apk()
+
+    print_status("Всё завершено успешно!")
+
+
+if __name__ == "__main__":
+    main()
