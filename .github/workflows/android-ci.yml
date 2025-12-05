@@ -17,7 +17,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4- name: Regenerate Gradle Wrapper
+        run: |
+          rm -rf gradlew gradlew.bat gradle
+          gradle wrapper --gradle-version 8.9
+          
         with:
           distribution: temurin
           java-version: 17
