@@ -2,9 +2,7 @@ package com.vasilisinaazbuka.games
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +13,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+enum class Screen {
+    MENU,
+    BIM_EMOTIONS,
+    FEED_BIM,
+    FOREST_SORT,
+    HAPPY_COUNTING,
+    KUZYA_CLOCK,
+    KUZYA_GARAGE,
+    RUSSIA_MAP
+}
 
 @Composable
 fun MainMenuScreen() {
@@ -38,7 +47,7 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.horizontalGradient(  // ГОРИЗОНТАЛЬНЫЙ градиент вместо вертикального
+                Brush.horizontalGradient(
                     colors = listOf(
                         Color(0xFF81C784),
                         Color(0xFF4CAF50),
@@ -47,7 +56,7 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                 )
             )
     ) {
-        Row(  // ГОРИЗОНТАЛЬНОЕ расположение
+        Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp),
@@ -71,7 +80,6 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                // Персонажи
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
@@ -104,7 +112,6 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 
-                // Сетка кнопок 2x4 (для 7 игр + 1 пустая)
                 val games = listOf(
                     Triple("🐶😊", "Эмоции Бима", Screen.BIM_EMOTIONS),
                     Triple("🍖", "Покорми Бима", Screen.FEED_BIM),
@@ -118,11 +125,11 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    games.chunked(2).forEach { rowGames ->
+                    games.chunked(2).forEach { rowGames: List<Triple<String, String, Screen>> ->
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            rowGames.forEach { (emoji, name, screen) ->
+                            rowGames.forEach { (emoji: String, name: String, screen: Screen) ->
                                 Button(
                                     onClick = { onScreenSelected(screen) },
                                     modifier = Modifier
@@ -150,7 +157,6 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                                     }
                                 }
                             }
-                            // Добавляем пустое место, если в ряду 1 элемент
                             if (rowGames.size == 1) {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
