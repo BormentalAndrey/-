@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Кузя и Бим: Игры</string>
+    <string name="game_emotions">Эмоции Бима</string>
+    <string name="game_feed">Покорми Бима</string>
+    <string name="game_forest">Лесная сортировка</string>
+    <string name="game_counting">Весёлый счёт</string>
+    <string name="game_clock">Часы Кузи</string>
+    <string name="game_garage">Гараж Кузи</string>
+    <string name="game_map">Карта России</string>
+</resources>
