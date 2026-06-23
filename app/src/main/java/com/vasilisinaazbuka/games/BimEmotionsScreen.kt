@@ -1,13 +1,22 @@
 package com.vasilisinaazbuka.games
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -15,16 +24,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import kotlin.random.Random
+import kotlinx.coroutines.delay
+
+data class Emotion(
+    val emoji: String,
+    val name: String,
+    val imageResId: Int
+)
 
 @Composable
 fun BimEmotionsScreen(onBackClick: () -> Unit) {
-    data class Emotion(
-        val emoji: String,
-        val name: String,
-        val imageResId: Int
-    )
-    
     val emotionsList = listOf(
         Emotion("🐶😊", "Радость", R.drawable.bim_happy),
         Emotion("🐶😢", "Грусть", R.drawable.bim_sad),
@@ -41,124 +50,164 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
     var currentEmotion by remember { mutableStateOf(emotionsList.random()) }
     var isCorrectAnswer by remember { mutableStateOf<Boolean?>(null) }
     var options by remember { mutableStateOf(generateOptions(emotionsList, currentEmotion)) }
+    var showNextButton by remember { mutableStateOf(false) }
     
-    fun generateOptions(allEmotions: List<Emotion>, correctEmotion: Emotion): List<Emotion> {
-        val otherEmotions = allEmotions.filter { it != correctEmotion }
-        val randomOptions = otherEmotions.shuffled().take(2)
-        return (randomOptions + correctEmotion).shuffled()
-    }
+    val feedbackScale by animateFloatAsState(
+        targetValue = if (isCorrectAnswer != null) 1.1f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    )
     
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // Кнопка закрытия
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFFFF3E0),
+                        Color(0xFFFFE0B2),
+                        Color(0xFFFFCC80)
+                    )
+                )
+            )
+    ) {
         IconButton(
-            onClick = onBackClick, 
+            onClick = onBackClick,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .zIndex(100f)
+                .padding(16.dp)
                 .size(48.dp)
+                .shadow(4.dp, CircleShape)
+                .background(Color.White.copy(alpha = 0.9f), CircleShape)
         ) {
             Icon(
-                Icons.Default.Close, 
-                contentDescription = "Закрыть", 
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurface
+                Icons.Default.Close,
+                contentDescription = "Назад",
+                modifier = Modifier.size(32.dp),
+                tint = Color(0xFFE65100)
             )
         }
         
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 60.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Заголовок
             Text(
-                text = "Что чувствует Бим?",
+                "Что чувствует Бим?",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color(0xFFE65100)
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Изображение Бима с эмоцией
             Card(
                 modifier = Modifier
-                    .size(280.dp)
-                    .padding(16.dp),
+                    .size(200.dp)
+                    .shadow(8.dp, CircleShape),
+                shape = CircleShape,
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Image(
                     painter = painterResource(id = currentEmotion.imageResId),
                     contentDescription = currentEmotion.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
-            }
-            
-            // Индикатор правильного/неправильного ответа
-            if (isCorrectAnswer != null) {
-                Text(
-                    text = if (isCorrectAnswer == true) "✅ Правильно!" else "❌ Попробуй ещё раз",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isCorrectAnswer == true) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
-                        MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
             }
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Кнопки с вариантами ответов
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            if (isCorrectAnswer != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .scale(feedbackScale),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isCorrectAnswer == true) 
+                            Color(0xFFC8E6C9) 
+                        else 
+                            Color(0xFFFFCDD2)
+                    )
+                ) {
+                    Text(
+                        text = if (isCorrectAnswer == true) "✅ Правильно! Это ${currentEmotion.name}"
+                               else "❌ Попробуй ещё раз!",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isCorrectAnswer == true) Color(0xFF2E7D32) else Color(0xFFC62828),
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 options.forEach { option ->
                     Button(
                         onClick = {
-                            isCorrectAnswer = option == currentEmotion
-                            if (isCorrectAnswer == true) {
-                                // Через небольшую задержку показываем новую эмоцию
-                                currentEmotion = emotionsList.random()
-                                options = generateOptions(emotionsList, currentEmotion)
-                                isCorrectAnswer = null
+                            if (option == currentEmotion) {
+                                isCorrectAnswer = true
+                                showNextButton = true
+                            } else {
+                                isCorrectAnswer = false
                             }
                         },
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .height(70.dp),
+                            .weight(1f)
+                            .height(70.dp)
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = isCorrectAnswer == null,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isCorrectAnswer != null && option == currentEmotion) 
-                                MaterialTheme.colorScheme.primaryContainer
-                            else 
-                                MaterialTheme.colorScheme.primary
-                        ),
-                        enabled = !(isCorrectAnswer == true && option != currentEmotion)
+                            containerColor = Color(0xFFE65100)
+                        )
                     ) {
                         Text(
-                            text = option.name,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Medium
+                            option.name,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
                         )
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Счетчик или дополнительная информация
-            Text(
-                text = "Выбери правильную эмоцию",
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+            if (showNextButton) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        currentEmotion = emotionsList.random()
+                        options = generateOptions(emotionsList, currentEmotion)
+                        isCorrectAnswer = null
+                        showNextButton = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    )
+                ) {
+                    Text("Далее ▶️", fontSize = 20.sp)
+                }
+            }
         }
     }
+}
+
+fun generateOptions(emotions: List<Emotion>, correct: Emotion): List<Emotion> {
+    val others = emotions.filter { it != correct }.shuffled()
+    return (listOf(correct) + others.take(2)).shuffled()
 }
