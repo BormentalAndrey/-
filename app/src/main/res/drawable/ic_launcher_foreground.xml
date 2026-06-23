@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Зелёный круг (фон иконки) -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+    
+    <!-- Собака (упрощённо) -->
+    <path
+        android:fillColor="#8D6E63"
+        android:pathData="M35,50 Q35,40 45,40 Q50,40 52,43 L55,50 Q55,55 50,55 L45,55 Q35,55 35,50Z"/>
+    
+    <!-- Мальчик (упрощённо) -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M55,45 Q58,38 65,38 L65,52 Q60,55 55,52Z"/>
+    
+    <!-- Уши собаки -->
+    <path
+        android:fillColor="#795548"
+        android:pathData="M32,45 Q28,38 30,35 Q32,38 35,42Z"/>
+    <path
+        android:fillColor="#795548"
+        android:pathData="M53,42 Q56,36 58,34 Q55,38 52,42Z"/>
+    
+    <!-- Глаза (точки) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,47m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,47m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+</vector>
