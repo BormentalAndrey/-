@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 data class ForestItem(
     val id: String,
@@ -52,7 +51,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
     var level by remember { mutableIntStateOf(1) }
     var showInstructions by remember { mutableStateOf(true) }
     
-    // Состояние игры
     var foundItems by remember { mutableStateOf(generateForestItems(level)) }
     var collectedItems by remember { mutableStateOf(mapOf<ItemCategory, MutableList<ForestItem>>()) }
     var selectedItem by remember { mutableStateOf<ForestItem?>(null) }
@@ -60,7 +58,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
     var isCorrectDrop by remember { mutableStateOf<Boolean?>(null) }
     var gameCompleted by remember { mutableStateOf(false) }
     
-    // Анимация для обратной связи
     val feedbackScale by animateFloatAsState(
         targetValue = if (showFeedback != null) 1.2f else 1f,
         animationSpec = spring(
@@ -69,13 +66,11 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
         )
     )
     
-    // Инициализация корзин
     LaunchedEffect(level) {
         collectedItems = ItemCategory.values().associateWith { mutableListOf<ForestItem>() }
         foundItems = generateForestItems(level)
     }
     
-    // Проверка завершения уровня
     LaunchedEffect(collectedItems) {
         val totalCollected = collectedItems.values.sumOf { it.size }
         if (totalCollected == foundItems.size && foundItems.isNotEmpty()) {
@@ -88,41 +83,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 showFeedback = "😊 Хорошо!"
             }
             gameCompleted = true
-        }
-    }
-
-    // Функция проверки правильности сортировки
-    fun checkSorting(item: ForestItem, targetCategory: ItemCategory): Boolean {
-        return item.category == targetCategory
-    }
-    
-    // Функция перемещения предмета в корзину
-    fun moveToBasket(item: ForestItem, targetCategory: ItemCategory) {
-        if (checkSorting(item, targetCategory)) {
-            // Правильно
-            score += 10
-            collectedItems = collectedItems.toMutableMap().also { map ->
-                map[targetCategory] = (map[targetCategory]?.toMutableList() ?: mutableListOf()).also {
-                    it.add(item)
-                }
-            }
-            foundItems = foundItems - item
-            selectedItem = null
-            isCorrectDrop = true
-            showFeedback = "✅ Правильно!"
-        } else {
-            // Неправильно
-            mistakes++
-            score = (score - 5).coerceAtLeast(0)
-            isCorrectDrop = false
-            showFeedback = "❌ Не подходит! ${item.emoji} относится к категории «${item.category.displayName}»"
-        }
-        
-        // Сброс анимации через 2 секунды
-        LaunchedEffect(showFeedback) {
-            delay(2000)
-            showFeedback = null
-            isCorrectDrop = null
         }
     }
 
@@ -140,7 +100,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 )
             )
     ) {
-        // Инструкция при первом запуске
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -160,7 +119,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             )
         }
         
-        // Кнопка Назад
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -179,7 +137,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             )
         }
         
-        // Счет и уровень (верхняя панель)
         Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -200,7 +157,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 ScoreItem("🎯", "Ур.$level", Color(0xFF1976D2))
                 ScoreItem("❌", "$mistakes", Color(0xFFD32F2F))
                 
-                // Прогресс
                 val progress = if (foundItems.isNotEmpty()) {
                     (collectedItems.values.sumOf { it.size }.toFloat() / 
                      (collectedItems.values.sumOf { it.size } + foundItems.size).toFloat())
@@ -210,10 +166,7 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.width(60.dp)
                 ) {
-                    Text(
-                        "📊", 
-                        fontSize = 16.sp
-                    )
+                    Text("📊", fontSize = 16.sp)
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier
@@ -237,7 +190,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 .padding(top = 100.dp, bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Заголовок
             Text(
                 text = "🌲 Собери находки в лесу! 🌲",
                 fontSize = 28.sp,
@@ -249,7 +201,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                     .shadow(4.dp)
             )
             
-            // Обратная связь
             if (showFeedback != null) {
                 Card(
                     modifier = Modifier
@@ -280,7 +231,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Найденные предметы (сетка)
             if (foundItems.isNotEmpty()) {
                 Card(
                     modifier = Modifier
@@ -323,7 +273,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                     }
                 }
             } else if (gameCompleted) {
-                // Экран завершения уровня
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -374,7 +323,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Корзины для сортировки
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -416,7 +364,23 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                                 isHighlighted = selectedItem?.category == category,
                                 onClick = {
                                     selectedItem?.let { item ->
-                                        moveToBasket(item, category)
+                                        if (item.category == category) {
+                                            score += 10
+                                            val updatedMap = collectedItems.toMutableMap()
+                                            val list = updatedMap[category]?.toMutableList() ?: mutableListOf()
+                                            list.add(item)
+                                            updatedMap[category] = list
+                                            collectedItems = updatedMap
+                                            foundItems = foundItems.filter { it.id != item.id }
+                                            selectedItem = null
+                                            isCorrectDrop = true
+                                            showFeedback = "✅ Правильно!"
+                                        } else {
+                                            mistakes++
+                                            score = (score - 5).coerceAtLeast(0)
+                                            isCorrectDrop = false
+                                            showFeedback = "❌ Не подходит! ${item.emoji} относится к категории «${item.category.displayName}»"
+                                        }
                                     }
                                 }
                             )
@@ -424,6 +388,14 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+        }
+    }
+    
+    LaunchedEffect(showFeedback) {
+        if (showFeedback != null) {
+            delay(2000)
+            showFeedback = null
+            isCorrectDrop = null
         }
     }
 }
@@ -467,10 +439,7 @@ fun ForestItemCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = item.emoji,
-                    fontSize = 40.sp
-                )
+                Text(text = item.emoji, fontSize = 40.sp)
                 Text(
                     text = item.name,
                     fontSize = 10.sp,
@@ -514,10 +483,7 @@ fun Basket(
         modifier = Modifier
             .fillMaxWidth()
             .scale(scale)
-            .clickable(
-                enabled = isHighlighted,
-                onClick = onClick
-            )
+            .clickable(enabled = isHighlighted, onClick = onClick)
             .then(
                 if (isHighlighted) Modifier.border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(12.dp))
                 else Modifier
@@ -545,10 +511,7 @@ fun Basket(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = category.icon,
-                    fontSize = 24.sp
-                )
+                Text(text = category.icon, fontSize = 24.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = category.displayName,
@@ -597,25 +560,13 @@ fun Basket(
 
 @Composable
 fun ScoreItem(emoji: String, text: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = emoji,
-            fontSize = 20.sp
-        )
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = emoji, fontSize = 20.sp)
+        Text(text = text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
-// Генерация лесных предметов для уровня
 fun generateForestItems(level: Int): List<ForestItem> {
-    val items = mutableListOf<ForestItem>()
     val baseItems = listOf(
         ForestItem("1", "🍄", "Белый гриб", ItemCategory.MUSHROOMS),
         ForestItem("2", "🍄‍🟫", "Подберёзовик", ItemCategory.MUSHROOMS),
@@ -650,6 +601,5 @@ fun generateForestItems(level: Int): List<ForestItem> {
     }
     
     val availableItems = baseItems.filter { it.category in categoriesToUse }
-    
     return availableItems.shuffled().take(itemCount)
 }
