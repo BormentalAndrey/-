@@ -1,0 +1,82 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file
+local.properties
+
+# Proguard folder
+proguard/
+
+# Log Files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Android Studio captures folder
+captures/
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.p12
+*.key
+*.keystore
+
+# Google Services
+google-services.json
+
+# Firebase
+.firebase/
+
+# Crashlytics
+com_crashlytics_export_strings.xml
+
+# NDK
+obj/
+libs/
+
+# Kotlin
+.kotlin/
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
