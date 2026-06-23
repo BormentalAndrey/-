@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Базовая тема приложения -->
+    <!-- Базовая тема приложения (горизонтальная) -->
     <style name="Theme.KuzyaBimGames" parent="android:Theme.Material.Light.NoActionBar">
-        <!-- Цвет статус-бара -->
         <item name="android:statusBarColor">@color/white</item>
-        <!-- Цвет навигационной панели -->
         <item name="android:navigationBarColor">@color/white</item>
-        <!-- Иконки статус-бара тёмные -->
         <item name="android:windowLightStatusBar">true</item>
+        <!-- Для горизонтальной ориентации -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowNoTitle">true</item>
     </style>
     
-    <!-- Тема для экрана-заставки -->
+    <!-- Тема для экрана-заставки (горизонтальная) -->
     <style name="Theme.KuzyaBimGames.Splash" parent="Theme.KuzyaBimGames">
         <item name="android:windowBackground">@drawable/background_main</item>
     </style>
