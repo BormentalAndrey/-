@@ -16,17 +16,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class Screen {
-    MENU,
-    BIM_EMOTIONS,
-    FEED_BIM,
-    FOREST_SORT,
-    HAPPY_COUNTING,
-    KUZYA_CLOCK,
-    KUZYA_GARAGE,
-    RUSSIA_MAP
-}
-
 @Composable
 fun MainMenuScreen() {
     var currentScreen by remember { mutableStateOf(Screen.MENU) }
@@ -45,11 +34,11 @@ fun MainMenuScreen() {
 
 @Composable
 fun MainMenu(onScreenSelected: (Screen) -> Unit) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
+                Brush.horizontalGradient(  // ГОРИЗОНТАЛЬНЫЙ градиент вместо вертикального
                     colors = listOf(
                         Color(0xFF81C784),
                         Color(0xFF4CAF50),
@@ -57,77 +46,127 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                     )
                 )
             )
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🎮 Весёлые приключения\nКузи и Бима!",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        Text(
-            text = "Выбери игру:",
-            fontSize = 24.sp,
-            color = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-        
-        // Список игр
-        val games = listOf(
-            Triple("🐶😊", "Эмоции Бима", Screen.BIM_EMOTIONS),
-            Triple("🍖", "Покорми Бима", Screen.FEED_BIM),
-            Triple("🌲", "Лесная сортировка", Screen.FOREST_SORT),
-            Triple("🔢", "Весёлый счёт", Screen.HAPPY_COUNTING),
-            Triple("🕐", "Часы Кузи", Screen.KUZYA_CLOCK),
-            Triple("🚗", "Гараж Кузи", Screen.KUZYA_GARAGE),
-            Triple("🗺️", "Карта России", Screen.RUSSIA_MAP)
-        )
-        
-        games.forEach { (emoji, name, screen) ->
-            Button(
-                onClick = { onScreenSelected(screen) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-                    .height(70.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 6.dp
-                )
+        Row(  // ГОРИЗОНТАЛЬНОЕ расположение
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Левая часть - заголовок и персонажи
+            Column(
+                modifier = Modifier.weight(0.35f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
+                Text(
+                    text = "🎮 Весёлые\nприключения\nКузи и Бима!",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 42.sp
+                )
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                // Персонажи
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text(emoji, fontSize = 32.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2E7D32)
-                    )
+                    Text("👦", fontSize = 80.sp)
+                    Text("🐶", fontSize = 80.sp)
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Кузя и Бим",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            
+            // Правая часть - кнопки игр
+            Column(
+                modifier = Modifier
+                    .weight(0.65f)
+                    .padding(start = 32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Выбери игру:",
+                    fontSize = 28.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                // Сетка кнопок 2x4 (для 7 игр + 1 пустая)
+                val games = listOf(
+                    Triple("🐶😊", "Эмоции Бима", Screen.BIM_EMOTIONS),
+                    Triple("🍖", "Покорми Бима", Screen.FEED_BIM),
+                    Triple("🌲", "Лесная сортировка", Screen.FOREST_SORT),
+                    Triple("🔢", "Весёлый счёт", Screen.HAPPY_COUNTING),
+                    Triple("🕐", "Часы Кузи", Screen.KUZYA_CLOCK),
+                    Triple("🚗", "Гараж Кузи", Screen.KUZYA_GARAGE),
+                    Triple("🗺️", "Карта России", Screen.RUSSIA_MAP)
+                )
+                
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    games.chunked(2).forEach { rowGames ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowGames.forEach { (emoji, name, screen) ->
+                                Button(
+                                    onClick = { onScreenSelected(screen) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(80.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White.copy(alpha = 0.9f)
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 6.dp
+                                    )
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(emoji, fontSize = 28.sp)
+                                        Text(
+                                            name,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF2E7D32)
+                                        )
+                                    }
+                                }
+                            }
+                            // Добавляем пустое место, если в ряду 1 элемент
+                            if (rowGames.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "🌟 Играй и учись вместе с Кузей и Бимом! 🌟",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "🌟 Играй и учись вместе с Кузей и Бимом! 🌟",
-            fontSize = 14.sp,
-            color = Color.White.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
-        )
     }
 }
