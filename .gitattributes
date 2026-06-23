@@ -1,0 +1,39 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Java/Kotlin files
+*.java text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.gradle text eol=lf
+
+# XML files
+*.xml text eol=lf
+
+# YAML files
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Markdown files
+*.md text eol=lf
+
+# Properties files
+*.properties text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.apk binary
+*.aab binary
+*.jar binary
+*.aar binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.jks binary
+*.keystore binary
