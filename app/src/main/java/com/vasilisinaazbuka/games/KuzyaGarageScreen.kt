@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 data class Car(
     val id: String,
@@ -62,25 +61,21 @@ enum class CarType(val displayName: String, val emoji: String) {
 
 @Composable
 fun KuzyaGarageScreen(onBackClick: () -> Unit) {
-    // Состояния игры
     var score by remember { mutableIntStateOf(0) }
     var level by remember { mutableIntStateOf(1) }
     var correctPlacements by remember { mutableIntStateOf(0) }
     var mistakes by remember { mutableIntStateOf(0) }
     var showInstructions by remember { mutableStateOf(true) }
     
-    // Генерация машин и гаражей
     var availableCars by remember { mutableStateOf(generateCars(level)) }
     var garages by remember { mutableStateOf(generateGarages(level)) }
     var parkedCars by remember { mutableStateOf(mapOf<CarColor, MutableList<Car>>()) }
     
-    // Текущие состояния
     var selectedCar by remember { mutableStateOf<Car?>(null) }
     var showFeedback by remember { mutableStateOf("") }
     var isCorrect by remember { mutableStateOf<Boolean?>(null) }
     var showCelebration by remember { mutableStateOf(false) }
     
-    // Анимации
     val feedbackScale by animateFloatAsState(
         targetValue = if (showFeedback.isNotEmpty()) 1.1f else 1f,
         animationSpec = spring(
@@ -97,14 +92,12 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
         )
     )
     
-    // Инициализация
     LaunchedEffect(level) {
         availableCars = generateCars(level)
         garages = generateGarages(level)
         parkedCars = garages.associate { it to mutableListOf<Car>() }
     }
     
-    // Проверка завершения уровня
     LaunchedEffect(parkedCars) {
         val totalParked = parkedCars.values.sumOf { it.size }
         if (totalParked == availableCars.size && availableCars.isNotEmpty()) {
@@ -116,49 +109,11 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 else -> "😊 Хорошо! Продолжай учиться!"
             }
             correctPlacements = 0
-            
-            delay(2000)
-            if (level < 6) {
-                level++
-                showCelebration = false
-                showFeedback = ""
-            }
         }
     }
     
-    // Функция парковки машины
-    fun parkCar(car: Car, targetColor: CarColor) {
-        if (car.color == targetColor) {
-            // Правильная парковка
-            isCorrect = true
-            correctPlacements++
-            score += 10 * level
-            
-            parkedCars = parkedCars.toMutableMap().also { map ->
-                map[targetColor] = (map[targetColor]?.toMutableList() ?: mutableListOf()).also {
-                    it.add(car)
-                }
-            }
-            availableCars = availableCars - car
-            selectedCar = null
-            
-            showFeedback = listOf(
-                "✅ Правильно! ${car.name} в ${targetColor.displayName} гараже!",
-                "🎯 Точно в цвет! +${10 * level} очков",
-                "👏 Отлично! ${car.emoji} на месте!"
-            ).random()
-        } else {
-            // Неправильная парковка
-            isCorrect = false
-            mistakes++
-            score = (score - 5).coerceAtLeast(0)
-            selectedCar = null
-            
-            showFeedback = "❌ Ой! ${car.name} должна быть в ${car.color.displayName} гараже!"
-        }
-        
-        // Сброс обратной связи
-        LaunchedEffect(showFeedback) {
+    LaunchedEffect(showFeedback) {
+        if (showFeedback.isNotEmpty()) {
             delay(2500)
             showFeedback = ""
             isCorrect = null
@@ -178,7 +133,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 )
             )
     ) {
-        // Инструкция
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -207,7 +161,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
             )
         }
         
-        // Кнопка Назад
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -232,7 +185,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Верхняя панель статистики
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -250,14 +202,13 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 ) {
                     StatItem("⭐", "$score", Color(0xFFFFA000))
                     StatItem("🎯", "Ур.$level", Color(0xFF1976D2))
-                    StatItem("✅", "$correctPlacements/${availableCars.size + (parkedCars.values.sumOf { it.size })}", Color(0xFF4CAF50))
+                    StatItem("✅", "$correctPlacements/${availableCars.size + parkedCars.values.sumOf { it.size }}", Color(0xFF4CAF50))
                     StatItem("❌", "$mistakes", Color(0xFFD32F2F))
                 }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Заголовок
             Text(
                 text = "🚗 Расставь машинки по цветам!",
                 fontSize = 24.sp,
@@ -268,7 +219,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Обратная связь
             AnimatedVisibility(
                 visible = showFeedback.isNotEmpty(),
                 enter = scaleIn() + fadeIn(),
@@ -306,7 +256,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Гаражи
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -320,7 +269,33 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                         isCorrectColor = selectedCar?.color == garageColor,
                         onClick = {
                             selectedCar?.let { car ->
-                                parkCar(car, garageColor)
+                                if (car.color == garageColor) {
+                                    isCorrect = true
+                                    correctPlacements++
+                                    score += 10 * level
+                                    
+                                    val updatedMap = parkedCars.toMutableMap()
+                                    val list = updatedMap[garageColor]?.toMutableList() ?: mutableListOf()
+                                    list.add(car)
+                                    updatedMap[garageColor] = list
+                                    parkedCars = updatedMap
+                                    
+                                    availableCars = availableCars.filter { it.id != car.id }
+                                    selectedCar = null
+                                    
+                                    showFeedback = listOf(
+                                        "✅ Правильно! ${car.name} в ${garageColor.displayName} гараже!",
+                                        "🎯 Точно в цвет! +${10 * level} очков",
+                                        "👏 Отлично! ${car.emoji} на месте!"
+                                    ).random()
+                                } else {
+                                    isCorrect = false
+                                    mistakes++
+                                    score = (score - 5).coerceAtLeast(0)
+                                    selectedCar = null
+                                    
+                                    showFeedback = "❌ Ой! ${car.name} должна быть в ${car.color.displayName} гараже!"
+                                }
                             }
                         }
                     )
@@ -329,7 +304,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Индикатор выбранной машинки
             if (selectedCar != null) {
                 Card(
                     modifier = Modifier
@@ -348,10 +322,7 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Выбрана: ${selectedCar!!.emoji}",
-                            fontSize = 28.sp
-                        )
+                        Text(text = "Выбрана: ${selectedCar!!.emoji}", fontSize = 28.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = selectedCar!!.name,
@@ -371,7 +342,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
             
-            // Доступные машинки
             if (availableCars.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -379,9 +349,7 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Выбери машинку:",
                             fontSize = 20.sp,
@@ -408,7 +376,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                     }
                 }
             } else if (showCelebration) {
-                // Экран победы
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -446,9 +413,7 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                         
                         Spacer(modifier = Modifier.height(16.dp))
                         
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedButton(
                                 onClick = {
                                     level = 1
@@ -471,9 +436,7 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                                     }
                                 },
                                 enabled = level < 6,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF4CAF50)
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                             ) {
                                 Text("▶️ Далее")
                             }
@@ -482,7 +445,6 @@ fun KuzyaGarageScreen(onBackClick: () -> Unit) {
                 }
             }
             
-            // Подсказка
             if (selectedCar == null && availableCars.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -544,7 +506,6 @@ fun GarageBox(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Крыша гаража
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -553,13 +514,9 @@ fun GarageBox(
                     .background(color.color.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "🏠",
-                    fontSize = 24.sp
-                )
+                Text(text = "🏠", fontSize = 24.sp)
             }
             
-            // Название гаража
             Text(
                 text = color.displayName,
                 fontSize = 16.sp,
@@ -568,36 +525,22 @@ fun GarageBox(
                 textAlign = TextAlign.Center
             )
             
-            // Припаркованные машинки
             if (cars.isNotEmpty()) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     cars.take(3).forEach { car ->
-                        Text(
-                            text = car.emoji,
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(1.dp)
-                        )
+                        Text(text = car.emoji, fontSize = 20.sp, modifier = Modifier.padding(1.dp))
                     }
                     if (cars.size > 3) {
-                        Text(
-                            text = "+${cars.size - 3}",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                        Text(text = "+${cars.size - 3}", fontSize = 12.sp, color = Color.Gray)
                     }
                 }
             } else {
-                Text(
-                    text = "Пусто",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
+                Text(text = "Пусто", fontSize = 14.sp, color = Color.Gray)
             }
             
-            // Индикатор правильности
             if (isHighlighted && isCorrectColor) {
                 Icon(
                     Icons.Default.ArrowDropDown,
@@ -613,12 +556,7 @@ fun GarageBox(
 }
 
 @Composable
-fun CarCard(
-    car: Car,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    scale: Float
-) {
+fun CarCard(car: Car, isSelected: Boolean, onClick: () -> Unit, scale: Float) {
     Card(
         modifier = Modifier
             .width(120.dp)
@@ -640,37 +578,19 @@ fun CarCard(
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Text(text = car.emoji, fontSize = 48.sp)
             Text(
-                text = car.emoji,
-                fontSize = 48.sp
+                text = car.name, fontSize = 14.sp,
+                fontWeight = FontWeight.Bold, color = car.color.color, textAlign = TextAlign.Center
             )
-            Text(
-                text = car.name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = car.color.color,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = car.type.displayName,
-                fontSize = 11.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
+            Text(text = car.type.displayName, fontSize = 11.sp, color = Color.Gray, textAlign = TextAlign.Center)
             
             if (isSelected) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = "Выбрана",
-                    tint = car.color.color,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.CheckCircle, contentDescription = "Выбрана", tint = car.color.color, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -678,23 +598,12 @@ fun CarCard(
 
 @Composable
 fun StatItem(emoji: String, text: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = emoji,
-            fontSize = 20.sp
-        )
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = emoji, fontSize = 20.sp)
+        Text(text = text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
-// Генерация машин для уровня
 fun generateCars(level: Int): List<Car> {
     val allCars = listOf(
         Car("1", "Красная", "🚗", CarColor.RED, CarType.SEDAN, "Быстрая красная машина"),
@@ -710,12 +619,7 @@ fun generateCars(level: Int): List<Car> {
     )
     
     val carsPerLevel = when (level) {
-        1 -> 3
-        2 -> 4
-        3 -> 6
-        4 -> 8
-        5 -> 9
-        else -> 10
+        1 -> 3; 2 -> 4; 3 -> 6; 4 -> 8; 5 -> 9; else -> 10
     }
     
     val colorsPerLevel = when (level) {
@@ -725,11 +629,9 @@ fun generateCars(level: Int): List<Car> {
         else -> CarColor.values().toList()
     }
     
-    val availableCars = allCars.filter { it.color in colorsPerLevel }
-    return availableCars.shuffled().take(carsPerLevel)
+    return allCars.filter { it.color in colorsPerLevel }.shuffled().take(carsPerLevel)
 }
 
-// Генерация гаражей для уровня
 fun generateGarages(level: Int): List<CarColor> {
     return when (level) {
         1 -> listOf(CarColor.RED, CarColor.BLUE, CarColor.YELLOW)
