@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Атрибуты для горизонтальной ориентации -->
+    <attr name="landscape_only" format="boolean"/>
+</resources>
