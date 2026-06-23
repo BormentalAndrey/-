@@ -3,24 +3,23 @@ package com.vasilisinaazbuka.games
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -37,14 +36,12 @@ data class CountingLevel(
 
 @Composable
 fun HappyCountingScreen(onBackClick: () -> Unit) {
-    // Состояния игры
     var level by remember { mutableIntStateOf(1) }
     var score by remember { mutableIntStateOf(0) }
     var correctAnswers by remember { mutableIntStateOf(0) }
     var totalAttempts by remember { mutableIntStateOf(0) }
     var showInstructions by remember { mutableStateOf(true) }
     
-    // Конфигурация уровней
     val levels = remember {
         listOf(
             CountingLevel(1, 1, 3, listOf("🎾"), "Мячики"),
@@ -57,12 +54,10 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
     
     val currentLevel = levels.getOrElse(level - 1) { levels.last() }
     
-    // Генерация задания
     var targetCount by remember { mutableIntStateOf(Random.nextInt(currentLevel.minCount, currentLevel.maxCount + 1)) }
     var selectedObject by remember { mutableStateOf(currentLevel.objects.random()) }
     var options by remember { mutableStateOf(generateOptions(targetCount, currentLevel.maxCount)) }
     
-    // Состояния обратной связи
     var bimEmotion by remember { mutableStateOf("🐶🤔") }
     var kuzyaEmotion by remember { mutableStateOf("👦😊") }
     var showFeedback by remember { mutableStateOf("") }
@@ -70,7 +65,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
     var showCelebration by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     
-    // Анимации
     val feedbackScale by animateFloatAsState(
         targetValue = if (showFeedback.isNotEmpty()) 1.1f else 1f,
         animationSpec = spring(
@@ -100,7 +94,14 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
         )
     )
     
-    // Сброс анимаций
+    fun generateNewRound(levelConfig: CountingLevel) {
+        targetCount = Random.nextInt(levelConfig.minCount, levelConfig.maxCount + 1)
+        selectedObject = levelConfig.objects.random()
+        options = generateOptions(targetCount, levelConfig.maxCount)
+        bimEmotion = "🐶🤔"
+        kuzyaEmotion = "👦😊"
+    }
+    
     LaunchedEffect(showFeedback) {
         if (showFeedback.isNotEmpty()) {
             delay(2000)
@@ -114,60 +115,15 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
         }
     }
     
-    // Функция проверки ответа
-    fun checkAnswer(selected: Int) {
-        selectedOption = selected
-        totalAttempts++
-        
-        if (selected == targetCount) {
-            // Правильный ответ
-            isCorrectAnswer = true
-            correctAnswers++
-            val points = when {
-                level <= 2 -> 10
-                level <= 4 -> 20
-                else -> 30
-            }
-            score += points
-            bimEmotion = listOf("🐶🎉", "🐶❤️", "🐶😊", "🐶🌟").random()
-            kuzyaEmotion = listOf("👦😄", "👦👍", "👦🎉", "👦💪").random()
-            showFeedback = listOf(
-                "✅ Правильно! +$points",
-                "🌟 Молодец! +$points",
-                "🎯 В точку! +$points",
-                "💫 Отлично! +$points"
-            ).random()
-            showCelebration = true
-            
-            // Повышение уровня после 3 правильных подряд
-            if (correctAnswers >= 3 * level && level < levels.size) {
-                delay(1500)
-                level++
-                correctAnswers = 0
-                bimEmotion = "🐶🚀"
-                kuzyaEmotion = "👦🎊"
-                showFeedback = "🎊 Новый уровень! ${currentLevel.description}"
-            }
-        } else {
-            // Неправильный ответ
-            isCorrectAnswer = false
-            bimEmotion = listOf("🐶😢", "🐶🤨", "🐶😅").random()
-            kuzyaEmotion = "👦🤔"
-            showFeedback = listOf(
-                "❌ Не совсем! Попробуй ещё",
-                "🤔 Подумай ещё разок",
-                "💭 Посчитай внимательнее"
-            ).random()
+    LaunchedEffect(correctAnswers) {
+        if (correctAnswers >= 3 * level && level < levels.size && isCorrectAnswer == true) {
+            delay(1500)
+            level++
+            correctAnswers = 0
+            bimEmotion = "🐶🚀"
+            kuzyaEmotion = "👦🎊"
+            showFeedback = "🎊 Новый уровень! ${levels.getOrElse(level - 1) { levels.last() }.description}"
         }
-    }
-    
-    // Генерация нового раунда
-    fun generateNewRound(levelConfig: CountingLevel) {
-        targetCount = Random.nextInt(levelConfig.minCount, levelConfig.maxCount + 1)
-        selectedObject = levelConfig.objects.random()
-        options = generateOptions(targetCount, levelConfig.maxCount)
-        bimEmotion = "🐶🤔"
-        kuzyaEmotion = "👦😊"
     }
 
     Box(
@@ -184,7 +140,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 )
             )
     ) {
-        // Инструкция
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -211,7 +166,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
             )
         }
         
-        // Кнопка Назад
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -230,7 +184,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
             )
         }
         
-        // Верхняя панель статистики
         Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -258,7 +211,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(top = 100.dp)
         ) {
-            // Левая панель с персонажами
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -267,7 +219,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Кузя
                 Card(
                     modifier = Modifier
                         .size(100.dp)
@@ -280,24 +231,15 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = kuzyaEmotion,
-                            fontSize = 60.sp
-                        )
+                        Text(text = kuzyaEmotion, fontSize = 60.sp)
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Кузя",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1565C0)
-                )
+                Text("Кузя", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                // Бим
                 Card(
                     modifier = Modifier
                         .size(100.dp)
@@ -310,23 +252,14 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = bimEmotion,
-                            fontSize = 60.sp
-                        )
+                        Text(text = bimEmotion, fontSize = 60.sp)
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Бим",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1565C0)
-                )
+                Text("Бим", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
             }
 
-            // Правая панель с игрой
             Column(
                 modifier = Modifier
                     .weight(2f)
@@ -335,7 +268,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                // Заголовок задания
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -353,15 +285,10 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                             color = Color(0xFF1565C0),
                             textAlign = TextAlign.Center
                         )
-                        Text(
-                            text = currentLevel.description,
-                            fontSize = 16.sp,
-                            color = Color.Gray
-                        )
+                        Text(text = currentLevel.description, fontSize = 16.sp, color = Color.Gray)
                     }
                 }
                 
-                // Область с предметами
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -374,16 +301,14 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        FlowRow(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(24.dp),
-                            mainAxisSpacing = 12.dp,
-                            crossAxisSpacing = 12.dp,
-                            mainAxisArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             repeat(targetCount) { index ->
-                                val scale by animateFloatAsState(
+                                val itemScale by animateFloatAsState(
                                     targetValue = 1f,
                                     animationSpec = if (showCelebration) {
                                         repeatable(
@@ -399,7 +324,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                 Text(
                                     text = selectedObject,
                                     fontSize = 48.sp,
-                                    modifier = Modifier.scale(scale)
+                                    modifier = Modifier.scale(itemScale)
                                 )
                             }
                         }
@@ -408,7 +333,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Обратная связь
                 AnimatedVisibility(
                     visible = showFeedback.isNotEmpty(),
                     enter = scaleIn() + fadeIn(),
@@ -445,12 +369,11 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Кнопки с вариантами ответов
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    options.forEachIndexed { index, option ->
+                    options.forEach { option ->
                         val isSelected = selectedOption == option
                         val buttonScale by animateFloatAsState(
                             targetValue = when {
@@ -467,7 +390,37 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         Button(
                             onClick = { 
                                 if (selectedOption == null) {
-                                    checkAnswer(option)
+                                    selectedOption = option
+                                    totalAttempts++
+                                    
+                                    if (option == targetCount) {
+                                        isCorrectAnswer = true
+                                        correctAnswers++
+                                        val points = when {
+                                            level <= 2 -> 10
+                                            level <= 4 -> 20
+                                            else -> 30
+                                        }
+                                        score += points
+                                        bimEmotion = listOf("🐶🎉", "🐶❤️", "🐶😊", "🐶🌟").random()
+                                        kuzyaEmotion = listOf("👦😄", "👦👍", "👦🎉", "👦💪").random()
+                                        showFeedback = listOf(
+                                            "✅ Правильно! +$points",
+                                            "🌟 Молодец! +$points",
+                                            "🎯 В точку! +$points",
+                                            "💫 Отлично! +$points"
+                                        ).random()
+                                        showCelebration = true
+                                    } else {
+                                        isCorrectAnswer = false
+                                        bimEmotion = listOf("🐶😢", "🐶🤨", "🐶😅").random()
+                                        kuzyaEmotion = "👦🤔"
+                                        showFeedback = listOf(
+                                            "❌ Не совсем! Попробуй ещё",
+                                            "🤔 Подумай ещё разок",
+                                            "💭 Посчитай внимательнее"
+                                        ).random()
+                                    }
                                 }
                             },
                             modifier = Modifier
@@ -504,7 +457,6 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                     }
                 }
                 
-                // Подсказка
                 if (totalAttempts >= 3 && isCorrectAnswer == null) {
                     Text(
                         text = "💡 Подсказка: попробуй посчитать пальчиком каждый предмет",
@@ -525,59 +477,8 @@ fun StatChip(emoji: String, text: String, color: Color) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 8.dp)
     ) {
-        Text(
-            text = emoji,
-            fontSize = 20.sp
-        )
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
-
-@Composable
-fun FlowRow(
-    modifier: Modifier = Modifier,
-    mainAxisSpacing: Dp = 0.dp,
-    crossAxisSpacing: Dp = 0.dp,
-    mainAxisArrangement: Arrangement.Horizontal = Arrangement.Start,
-    content: @Composable () -> Unit
-) {
-    Layout(
-        modifier = modifier,
-        content = content
-    ) { measurables, constraints ->
-        val placeables = measurables.map { it.measure(constraints) }
-        
-        var x = 0
-        var y = 0
-        var rowHeight = 0
-        val totalWidth = constraints.maxWidth
-        
-        val positions = placeables.map { placeable ->
-            if (x + placeable.width > totalWidth && x > 0) {
-                x = 0
-                y += rowHeight + crossAxisSpacing.roundToPx()
-                rowHeight = 0
-            }
-            
-            val position = intArrayOf(x, y)
-            x += placeable.width + mainAxisSpacing.roundToPx()
-            rowHeight = maxOf(rowHeight, placeable.height)
-            
-            position
-        }
-        
-        val totalHeight = y + rowHeight
-        
-        layout(totalWidth, totalHeight) {
-            placeables.forEachIndexed { index, placeable ->
-                placeable.placeRelative(positions[index][0], positions[index][1])
-            }
-        }
+        Text(text = emoji, fontSize = 20.sp)
+        Text(text = text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
