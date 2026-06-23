@@ -6,7 +6,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -397,6 +396,7 @@ fun RussiaMap(
             }
             .pointerInput(Unit) {
                 detectDragGestures(
+                    onDrag = { _, _ -> },
                     onDragEnd = {
                         draggedPuzzle?.let { puzzle ->
                             if (mapSize.x > 0 && mapSize.y > 0) {
@@ -555,7 +555,8 @@ fun PuzzleCard(
             .scale(scale)
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = { offset -> onDragStart(offset); onClick() }
+                    onDragStart = { offset -> onDragStart(offset); onClick() },
+                    onDrag = { _, _ -> }
                 )
             }
             .clickable(onClick = onClick)
