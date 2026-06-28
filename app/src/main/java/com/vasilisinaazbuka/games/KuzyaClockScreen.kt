@@ -73,6 +73,7 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
     var gameMode by remember { mutableStateOf(GameMode.LEARN) }
     var selectedHour by remember { mutableIntStateOf(8) }
     var selectedMinute by remember { mutableIntStateOf(0) }
+    var isAM by remember { mutableStateOf(true) } // true = AM (0-11), false = PM (12-23)
     
     var targetActivity by remember { mutableStateOf(fullSchedule.random()) }
     var showFeedback by remember { mutableStateOf("") }
@@ -96,6 +97,7 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
                 targetActivity = fullSchedule.random()
                 selectedHour = 12
                 selectedMinute = 0
+                isAM = false
             }
             isCorrect = null
         }
@@ -104,7 +106,6 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Фоновое изображение
         Image(
             painter = painterResource(id = R.drawable.background_clock),
             contentDescription = "Фон часов",
@@ -112,7 +113,6 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
             contentScale = ContentScale.Crop
         )
         
-        // Полупрозрачный слой
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -133,7 +133,8 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
                         "• Нажимай на время, чтобы увидеть активность\n\n" +
                         "🎮 Режим «Игра»:\n" +
                         "• Установи правильное время для активности\n" +
-                        "• Перетаскивай стрелки часов\n\n" +
+                        "• Перетаскивай стрелки часов\n" +
+                        "• Выбирай AM (утро/день) или PM (вечер/ночь)\n\n" +
                         "🌈 Изучай режим дня вместе с Кузей!",
                         fontSize = 16.sp,
                         lineHeight = 24.sp
@@ -235,6 +236,7 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
                             currentScheduleIndex = index
                             selectedHour = fullSchedule[index].hour
                             selectedMinute = fullSchedule[index].minute
+                            isAM = fullSchedule[index].hour < 12
                         }
                     )
                 }
@@ -244,10 +246,16 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
                         targetActivity = targetActivity,
                         selectedHour = selectedHour,
                         selectedMinute = selectedMinute,
+                        isAM = isAM,
                         onHourChange = { selectedHour = it },
                         onMinuteChange = { selectedMinute = it },
+                        onAMPMChange = { isAM = it },
                         onCheck = {
-                            val isCorrectTime = selectedHour == targetActivity.hour && 
+                            val actualHour24 = if (!isAM && selectedHour != 12) selectedHour + 12
+                                              else if (isAM && selectedHour == 12) 0
+                                              else selectedHour
+                            
+                            val isCorrectTime = actualHour24 == targetActivity.hour && 
                                                abs(selectedMinute - targetActivity.minute) <= 15
                             
                             if (isCorrectTime) {
@@ -340,7 +348,18 @@ fun LearnMode(
             size = 250.dp
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // AM/PM индикатор
+        val periodText = if (currentItem.hour < 12) "🌅 AM (утро/день)" else "🌙 PM (вечер/ночь)"
+        Text(
+            text = periodText,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFE65100)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
         
         Text(
             text = "Выбери время:",
@@ -375,8 +394,10 @@ fun PlayMode(
     targetActivity: ScheduleItem,
     selectedHour: Int,
     selectedMinute: Int,
+    isAM: Boolean,
     onHourChange: (Int) -> Unit,
     onMinuteChange: (Int) -> Unit,
+    onAMPMChange: (Boolean) -> Unit,
     onCheck: () -> Unit,
     showFeedback: String,
     isCorrect: Boolean?,
@@ -416,10 +437,44 @@ fun PlayMode(
             size = 220.dp
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // AM/PM переключатель
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilterChip(
+                selected = isAM,
+                onClick = { onAMPMChange(true) },
+                label = { Text("🌅 AM", fontWeight = FontWeight.Bold) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFFFF9C4),
+                    containerColor = Color(0xFFF5F5F5)
+                )
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            FilterChip(
+                selected = !isAM,
+                onClick = { onAMPMChange(false) },
+                label = { Text("🌙 PM", fontWeight = FontWeight.Bold) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFE3F2FD),
+                    containerColor = Color(0xFFF5F5F5)
+                )
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // Выбранное время в 24-часовом формате
+        val actualHour24 = if (!isAM && selectedHour != 12) selectedHour + 12
+                          else if (isAM && selectedHour == 12) 0
+                          else selectedHour
         
         Text(
-            text = String.format("%02d:%02d", selectedHour, selectedMinute),
+            text = String.format("%02d:%02d", actualHour24, selectedMinute),
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFFE65100)
