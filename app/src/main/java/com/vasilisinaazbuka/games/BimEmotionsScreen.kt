@@ -4,8 +4,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -97,10 +99,13 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Text(
                 "Что чувствует Бим?",
                 fontSize = 36.sp,
@@ -206,6 +211,8 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                     Text("Далее ▶️", fontSize = 20.sp)
                 }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
