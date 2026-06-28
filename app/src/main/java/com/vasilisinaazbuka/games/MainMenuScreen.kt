@@ -1,14 +1,19 @@
 package com.vasilisinaazbuka.games
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,10 +70,15 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
         ) {
             // Левая часть - заголовок и персонажи
             Column(
-                modifier = Modifier.weight(0.35f),
+                modifier = Modifier
+                    .weight(0.35f)
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Text(
                     text = "🎮 Весёлые\nприключения\nКузи и Бима!",
                     fontSize = 36.sp,
@@ -83,8 +93,18 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text("👦", fontSize = 80.sp)
-                    Text("🐶", fontSize = 80.sp)
+                    Image(
+                        painter = painterResource(id = R.drawable.kuzya_normal),
+                        contentDescription = "Кузя",
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.bim_happy),
+                        contentDescription = "Бим",
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -95,16 +115,22 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
             
             // Правая часть - кнопки игр
             Column(
                 modifier = Modifier
                     .weight(0.65f)
-                    .padding(start = 32.dp),
+                    .fillMaxHeight()
+                    .padding(start = 32.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Text(
                     text = "Выбери игру:",
                     fontSize = 28.sp,
@@ -172,6 +198,8 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                     color = Color.White.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
