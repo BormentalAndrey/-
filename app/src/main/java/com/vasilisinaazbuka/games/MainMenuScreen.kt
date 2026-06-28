@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -49,18 +48,23 @@ fun MainMenuScreen() {
 @Composable
 fun MainMenu(onScreenSelected: (Screen) -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF81C784),
-                        Color(0xFF4CAF50),
-                        Color(0xFF2E7D32)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
+        Image(
+            painter = painterResource(id = R.drawable.background_main),
+            contentDescription = "Фон главного меню",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Полупрозрачный слой для читаемости текста
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x40000000))
+        )
+        
         Row(
             modifier = Modifier
                 .fillMaxSize()
