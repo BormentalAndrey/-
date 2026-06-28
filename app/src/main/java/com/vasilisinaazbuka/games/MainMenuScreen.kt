@@ -25,8 +25,7 @@ enum class Screen {
     FOREST_SORT,
     HAPPY_COUNTING,
     KUZYA_CLOCK,
-    KUZYA_GARAGE,
-    RUSSIA_MAP
+    KUZYA_GARAGE
 }
 
 @Composable
@@ -41,7 +40,6 @@ fun MainMenuScreen() {
         Screen.HAPPY_COUNTING -> HappyCountingScreen(onBackClick = { currentScreen = Screen.MENU })
         Screen.KUZYA_CLOCK -> KuzyaClockScreen(onBackClick = { currentScreen = Screen.MENU })
         Screen.KUZYA_GARAGE -> KuzyaGarageScreen(onBackClick = { currentScreen = Screen.MENU })
-        Screen.RUSSIA_MAP -> RussiaMapScreen(onBackClick = { currentScreen = Screen.MENU })
     }
 }
 
@@ -148,8 +146,7 @@ fun MainMenu(onScreenSelected: (Screen) -> Unit) {
                     Triple("🌲", "Лесная сортировка", Screen.FOREST_SORT),
                     Triple("🔢", "Весёлый счёт", Screen.HAPPY_COUNTING),
                     Triple("🕐", "Часы Кузи", Screen.KUZYA_CLOCK),
-                    Triple("🚗", "Гараж Кузи", Screen.KUZYA_GARAGE),
-                    Triple("🗺️", "Карта России", Screen.RUSSIA_MAP)
+                    Triple("🚗", "Гараж Кузи", Screen.KUZYA_GARAGE)
                 )
                 
                 Column(
