@@ -23,7 +23,9 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -53,12 +55,16 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
     var showFacts by remember { mutableStateOf(false) }
     var currentFact by remember { mutableStateOf("") }
     var showCelebration by remember { mutableStateOf(false) }
+    var stars by remember { mutableIntStateOf(0) }
     
     var selectedPuzzle by remember { mutableStateOf<RegionPuzzle?>(null) }
     var draggedPuzzle by remember { mutableStateOf<RegionPuzzle?>(null) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var showFeedback by remember { mutableStateOf("") }
     var isCorrect by remember { mutableStateOf<Boolean?>(null) }
+    var attempts by remember { mutableIntStateOf(0) }
+    var showHint by remember { mutableStateOf(false) }
+    var hintPuzzleId by remember { mutableStateOf<String?>(null) }
     
     var availablePuzzles by remember { mutableStateOf(generatePuzzles(level)) }
     var placedPuzzlesList by remember { mutableStateOf(listOf<RegionPuzzle>()) }
@@ -89,20 +95,31 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
             }
         }
     }
+    
+    LaunchedEffect(showHint) {
+        if (showHint) {
+            delay(2000)
+            showHint = false
+            hintPuzzleId = null
+        }
+    }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE3F2FD),
-                        Color(0xFFBBDEFB),
-                        Color(0xFF90CAF9)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.background_map),
+            contentDescription = "Фон карты",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x30000000))
+        )
+        
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -115,9 +132,10 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                         "🎯 Как играть:\n" +
                         "1. Выбери пазл слева\n" +
                         "2. Перетащи его на правильное место\n" +
-                        "3. Узнавай интересные факты о регионах\n\n" +
-                        "🌟 Чем точнее разместишь, тем больше очков!\n" +
-                        "📚 С каждым уровнем узнаёшь новые места",
+                        "3. У тебя 3 попытки на каждый пазл\n" +
+                        "4. Используй 💡 подсказку если трудно\n\n" +
+                        "🌟 Собирай без ошибок — получишь больше звёзд!\n" +
+                        "📚 Узнавай интересные факты о регионах",
                         fontSize = 16.sp,
                         lineHeight = 24.sp
                     )
@@ -189,6 +207,19 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                             StatBadge("🎯", "Ур.$level", Color(0xFF1976D2))
                             StatBadge("🗺️", "$placedPuzzles/${placedPuzzles + availablePuzzles.size}", Color(0xFF4CAF50))
                         }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            repeat(3) { index ->
+                                Icon(
+                                    Icons.Default.Star,
+                                    contentDescription = "Звезда",
+                                    tint = if (index < stars) Color(0xFFFFA000) else Color(0xFFE0E0E0),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                 }
                 
@@ -203,6 +234,21 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
+                // Кнопка подсказки
+                if (availablePuzzles.isNotEmpty() && selectedPuzzle != null) {
+                    Button(
+                        onClick = {
+                            hintPuzzleId = selectedPuzzle?.id
+                            showHint = true
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA000)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("💡 Показать где (3 попытки: $attempts/3)", fontSize = 14.sp, color = Color.White)
+                    }
+                }
+                
                 if (availablePuzzles.isNotEmpty()) {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -212,9 +258,11 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                             PuzzleCard(
                                 puzzle = puzzle,
                                 isSelected = selectedPuzzle == puzzle,
+                                attempts = attempts,
                                 onClick = {
                                     selectedPuzzle = if (selectedPuzzle == puzzle) null else puzzle
                                     draggedPuzzle = null
+                                    attempts = 0
                                 },
                                 onDragStart = { offset ->
                                     draggedPuzzle = puzzle
@@ -245,6 +293,11 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                                 textAlign = TextAlign.Center
                             )
                             Text("Счёт: $score", fontSize = 18.sp, color = Color(0xFF1976D2))
+                            Text(
+                                "Звёзды: ${"⭐".repeat(stars)}",
+                                fontSize = 20.sp,
+                                color = Color(0xFFFFA000)
+                            )
                             
                             Spacer(modifier = Modifier.height(12.dp))
                             
@@ -254,6 +307,7 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                                         level = 1
                                         score = 0
                                         mistakes = 0
+                                        stars = 0
                                         showCelebration = false
                                         availablePuzzles = generatePuzzles(1)
                                         placedPuzzlesList = emptyList()
@@ -267,6 +321,7 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                                     onClick = {
                                         level++
                                         score += 50
+                                        stars = 0
                                         showCelebration = false
                                         availablePuzzles = generatePuzzles(level)
                                         placedPuzzlesList = emptyList()
@@ -295,13 +350,21 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                     selectedPuzzle = selectedPuzzle,
                     draggedPuzzle = draggedPuzzle,
                     dragOffset = dragOffset,
+                    showHint = showHint,
+                    hintPuzzleId = hintPuzzleId,
                     onDrop = { puzzle, position ->
                         val targetPos = puzzle.position
                         val distance = (position - targetPos).getDistance()
                         
-                        if (distance < 0.15f) {
+                        if (distance < 0.18f) {
                             isCorrect = true
-                            score += 20 * level
+                            attempts = 0
+                            val bonusPoints = when (attempts) {
+                                0 -> 30
+                                1 -> 20
+                                else -> 10
+                            }
+                            score += bonusPoints * level
                             placedPuzzles++
                             
                             placedPuzzlesList = placedPuzzlesList + puzzle
@@ -310,17 +373,38 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                             currentFact = puzzle.facts.random()
                             showFacts = true
                             
-                            showFeedback = "✅ Правильно! ${puzzle.name} на месте!"
+                            showFeedback = "✅ Правильно! ${puzzle.name} на месте! +${bonusPoints * level}"
                             
                             if (availablePuzzles.isEmpty()) {
+                                val allPuzzles = placedPuzzles + availablePuzzles.size
+                                stars = when {
+                                    mistakes == 0 -> 3
+                                    mistakes <= 2 -> 2
+                                    else -> 1
+                                }
                                 showCelebration = true
                                 showFeedback = "🌟 Карта собрана! Уровень $level пройден!"
                             }
                         } else {
+                            attempts++
                             isCorrect = false
                             mistakes++
                             score = (score - 5).coerceAtLeast(0)
-                            showFeedback = "❌ Не совсем! Попробуй разместить ${puzzle.name} в другом месте"
+                            
+                            if (attempts >= 3) {
+                                // Автоматическая установка после 3 неверных
+                                placedPuzzlesList = placedPuzzlesList + puzzle
+                                availablePuzzles = availablePuzzles.filter { it.id != puzzle.id }
+                                placedPuzzles++
+                                showFeedback = "🔧 ${puzzle.name} установлен автоматически после 3 попыток"
+                                
+                                if (availablePuzzles.isEmpty()) {
+                                    stars = 1
+                                    showCelebration = true
+                                }
+                            } else {
+                                showFeedback = "❌ Мимо! Попытка ${attempts}/3. ${puzzle.name} в другом месте"
+                            }
                         }
                         
                         selectedPuzzle = null
@@ -341,7 +425,7 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                                 containerColor = when {
                                     isCorrect == true -> Color(0xFFC8E6C9)
                                     isCorrect == false -> Color(0xFFFFCDD2)
-                                    else -> Color.White
+                                    else -> Color(0xFFFFF9C4)
                                 }
                             ),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -353,7 +437,7 @@ fun RussiaMapScreen(onBackClick: () -> Unit) {
                                 color = when {
                                     isCorrect == true -> Color(0xFF2E7D32)
                                     isCorrect == false -> Color(0xFFC62828)
-                                    else -> Color.Black
+                                    else -> Color(0xFFF57F17)
                                 },
                                 modifier = Modifier.padding(12.dp),
                                 textAlign = TextAlign.Center
@@ -383,6 +467,8 @@ fun RussiaMap(
     selectedPuzzle: RegionPuzzle?,
     draggedPuzzle: RegionPuzzle?,
     dragOffset: Offset,
+    showHint: Boolean,
+    hintPuzzleId: String?,
     onDrop: (RegionPuzzle, Offset) -> Unit
 ) {
     var mapSize by remember { mutableStateOf(Offset.Zero) }
@@ -457,28 +543,48 @@ fun RussiaMap(
             val targetY = puzzle.position.y * mapSize.y
             
             if (!placedPuzzles.any { it.id == puzzle.id }) {
+                val isHinted = showHint && hintPuzzleId == puzzle.id
+                
                 Box(
                     modifier = Modifier
                         .offset {
                             IntOffset(
-                                (targetX - 25.dp.toPx()).roundToInt(),
-                                (targetY - 25.dp.toPx()).roundToInt()
+                                (targetX - 30.dp.toPx()).roundToInt(),
+                                (targetY - 30.dp.toPx()).roundToInt()
                             )
                         }
-                        .size(50.dp)
+                        .size(60.dp)
                         .border(
-                            2.dp,
-                            if (selectedPuzzle?.id == puzzle.id) Color(0xFF4CAF50) else Color(0xFFBBDEFB),
+                            3.dp,
+                            when {
+                                isHinted -> Color(0xFFFFA000)
+                                selectedPuzzle?.id == puzzle.id -> Color(0xFF4CAF50)
+                                else -> Color(0xFFBBDEFB)
+                            },
                             RoundedCornerShape(8.dp)
                         )
                         .background(
-                            if (selectedPuzzle?.id == puzzle.id) Color(0xFFC8E6C9).copy(alpha = 0.5f)
-                            else Color(0xFFF5F5F5).copy(alpha = 0.5f),
+                            when {
+                                isHinted -> Color(0xFFFFF8E1).copy(alpha = 0.9f)
+                                selectedPuzzle?.id == puzzle.id -> Color(0xFFC8E6C9).copy(alpha = 0.5f)
+                                else -> Color(0xFFF5F5F5).copy(alpha = 0.5f)
+                            },
                             RoundedCornerShape(8.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "📍", fontSize = 20.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = if (isHinted) "👇" else "📍", fontSize = 24.sp)
+                        if (isHinted) {
+                            Text(
+                                text = puzzle.name,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFE65100),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -491,18 +597,18 @@ fun RussiaMap(
                 modifier = Modifier
                     .offset {
                         IntOffset(
-                            (posX - 25.dp.toPx()).roundToInt(),
-                            (posY - 25.dp.toPx()).roundToInt()
+                            (posX - 30.dp.toPx()).roundToInt(),
+                            (posY - 30.dp.toPx()).roundToInt()
                         )
                     }
-                    .size(50.dp)
+                    .size(60.dp)
                     .background(puzzle.color.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
                     .border(2.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(puzzle.emoji, fontSize = 24.sp)
-                    Text(puzzle.name, fontSize = 8.sp, textAlign = TextAlign.Center, color = Color.White)
+                    Text(puzzle.emoji, fontSize = 28.sp)
+                    Text(puzzle.name, fontSize = 9.sp, textAlign = TextAlign.Center, color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -515,19 +621,19 @@ fun RussiaMap(
                 modifier = Modifier
                     .offset {
                         IntOffset(
-                            (dragX - 25.dp.toPx()).roundToInt(),
-                            (dragY - 25.dp.toPx()).roundToInt()
+                            (dragX - 30.dp.toPx()).roundToInt(),
+                            (dragY - 30.dp.toPx()).roundToInt()
                         )
                     }
-                    .size(50.dp)
+                    .size(60.dp)
                     .shadow(8.dp, RoundedCornerShape(8.dp))
                     .background(draggedPuzzle.color, RoundedCornerShape(8.dp))
                     .border(2.dp, Color(0xFFFFA000), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(draggedPuzzle.emoji, fontSize = 24.sp)
-                    Text(draggedPuzzle.name, fontSize = 8.sp, textAlign = TextAlign.Center, color = Color.White)
+                    Text(draggedPuzzle.emoji, fontSize = 28.sp)
+                    Text(draggedPuzzle.name, fontSize = 9.sp, textAlign = TextAlign.Center, color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -538,6 +644,7 @@ fun RussiaMap(
 fun PuzzleCard(
     puzzle: RegionPuzzle,
     isSelected: Boolean,
+    attempts: Int,
     onClick: () -> Unit,
     onDragStart: (Offset) -> Unit
 ) {
@@ -583,6 +690,14 @@ fun PuzzleCard(
                 Column {
                     Text(text = puzzle.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF424242))
                     Text(text = puzzle.description, fontSize = 12.sp, color = Color.Gray)
+                    if (isSelected && attempts > 0) {
+                        Text(
+                            text = "Попытки: ${attempts}/3",
+                            fontSize = 11.sp,
+                            color = Color(0xFFF44336),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
             Icon(Icons.Default.DragHandle, contentDescription = "Перетащить", tint = Color.Gray)
