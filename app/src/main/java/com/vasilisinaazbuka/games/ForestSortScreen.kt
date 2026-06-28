@@ -35,17 +35,17 @@ import kotlinx.coroutines.delay
 
 data class ForestItem(
     val id: String,
-    val emoji: String,
     val name: String,
-    val category: ItemCategory
+    val category: ItemCategory,
+    val imageResId: Int
 )
 
-enum class ItemCategory(val displayName: String, val icon: String) {
-    MUSHROOMS("Грибы", "🍄"),
-    BERRIES("Ягоды", "🫐"),
-    ANIMALS("Животные", "🐿️"),
-    FLOWERS("Цветы", "🌸"),
-    LEAVES("Листья", "🍂")
+enum class ItemCategory(val displayName: String, val iconResId: Int) {
+    MUSHROOMS("Грибы", R.drawable.mushroom_white),
+    BERRIES("Ягоды", R.drawable.berry_blueberry),
+    ANIMALS("Животные", R.drawable.animal_squirrel),
+    FLOWERS("Цветы", R.drawable.flower_daisy),
+    LEAVES("Листья", R.drawable.leaf_maple)
 }
 
 @Composable
@@ -93,7 +93,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Фоновое изображение
         Image(
             painter = painterResource(id = R.drawable.background_forest),
             contentDescription = "Лесной фон",
@@ -101,7 +100,6 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             contentScale = ContentScale.Crop
         )
         
-        // Полупрозрачный слой
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -390,7 +388,7 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                                             mistakes++
                                             score = (score - 5).coerceAtLeast(0)
                                             isCorrectDrop = false
-                                            showFeedback = "❌ Не подходит! ${item.emoji} относится к категории «${item.category.displayName}»"
+                                            showFeedback = "❌ Не подходит! ${item.name} относится к категории «${item.category.displayName}»"
                                         }
                                     }
                                 }
@@ -452,7 +450,12 @@ fun ForestItemCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = item.emoji, fontSize = 40.sp)
+                Image(
+                    painter = painterResource(id = item.imageResId),
+                    contentDescription = item.name,
+                    modifier = Modifier.size(40.dp),
+                    contentScale = ContentScale.Fit
+                )
                 Text(
                     text = item.name,
                     fontSize = 10.sp,
@@ -524,7 +527,12 @@ fun Basket(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = category.icon, fontSize = 24.sp)
+                Image(
+                    painter = painterResource(id = category.iconResId),
+                    contentDescription = category.displayName,
+                    modifier = Modifier.size(24.dp),
+                    contentScale = ContentScale.Fit
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = category.displayName,
@@ -542,10 +550,11 @@ fun Basket(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items.take(3).forEach { item ->
-                        Text(
-                            text = item.emoji,
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(horizontal = 1.dp)
+                        Image(
+                            painter = painterResource(id = item.imageResId),
+                            contentDescription = item.name,
+                            modifier = Modifier.size(20.dp),
+                            contentScale = ContentScale.Fit
                         )
                     }
                     if (items.size > 3) {
@@ -581,24 +590,24 @@ fun ScoreItem(emoji: String, text: String, color: Color) {
 
 fun generateForestItems(level: Int): List<ForestItem> {
     val baseItems = listOf(
-        ForestItem("1", "🍄", "Белый гриб", ItemCategory.MUSHROOMS),
-        ForestItem("2", "🍄‍🟫", "Подберёзовик", ItemCategory.MUSHROOMS),
-        ForestItem("3", "🟤", "Моховик", ItemCategory.MUSHROOMS),
-        ForestItem("4", "🍄", "Лисичка", ItemCategory.MUSHROOMS),
-        ForestItem("5", "🫐", "Черника", ItemCategory.BERRIES),
-        ForestItem("6", "🍓", "Земляника", ItemCategory.BERRIES),
-        ForestItem("7", "🫐", "Голубика", ItemCategory.BERRIES),
-        ForestItem("8", "🍒", "Вишня", ItemCategory.BERRIES),
-        ForestItem("9", "🐿️", "Белка", ItemCategory.ANIMALS),
-        ForestItem("10", "🦔", "Ёжик", ItemCategory.ANIMALS),
-        ForestItem("11", "🐰", "Заяц", ItemCategory.ANIMALS),
-        ForestItem("12", "🦊", "Лиса", ItemCategory.ANIMALS),
-        ForestItem("13", "🌸", "Ромашка", ItemCategory.FLOWERS),
-        ForestItem("14", "🌻", "Подсолнух", ItemCategory.FLOWERS),
-        ForestItem("15", "🌺", "Иван-чай", ItemCategory.FLOWERS),
-        ForestItem("16", "🍂", "Клён", ItemCategory.LEAVES),
-        ForestItem("17", "🍁", "Дуб", ItemCategory.LEAVES),
-        ForestItem("18", "🌿", "Папоротник", ItemCategory.LEAVES)
+        ForestItem("1", "Белый гриб", ItemCategory.MUSHROOMS, R.drawable.mushroom_white),
+        ForestItem("2", "Подберёзовик", ItemCategory.MUSHROOMS, R.drawable.mushroom_brown),
+        ForestItem("3", "Моховик", ItemCategory.MUSHROOMS, R.drawable.mushroom_moss),
+        ForestItem("4", "Лисичка", ItemCategory.MUSHROOMS, R.drawable.mushroom_chanterelle),
+        ForestItem("5", "Черника", ItemCategory.BERRIES, R.drawable.berry_blueberry),
+        ForestItem("6", "Земляника", ItemCategory.BERRIES, R.drawable.berry_strawberry),
+        ForestItem("7", "Голубика", ItemCategory.BERRIES, R.drawable.berry_blueberry2),
+        ForestItem("8", "Вишня", ItemCategory.BERRIES, R.drawable.berry_cherry),
+        ForestItem("9", "Белка", ItemCategory.ANIMALS, R.drawable.animal_squirrel),
+        ForestItem("10", "Ёжик", ItemCategory.ANIMALS, R.drawable.animal_hedgehog),
+        ForestItem("11", "Заяц", ItemCategory.ANIMALS, R.drawable.animal_rabbit),
+        ForestItem("12", "Лиса", ItemCategory.ANIMALS, R.drawable.animal_fox),
+        ForestItem("13", "Ромашка", ItemCategory.FLOWERS, R.drawable.flower_daisy),
+        ForestItem("14", "Подсолнух", ItemCategory.FLOWERS, R.drawable.flower_sunflower),
+        ForestItem("15", "Иван-чай", ItemCategory.FLOWERS, R.drawable.flower_fireweed),
+        ForestItem("16", "Клён", ItemCategory.LEAVES, R.drawable.leaf_maple),
+        ForestItem("17", "Дуб", ItemCategory.LEAVES, R.drawable.leaf_oak),
+        ForestItem("18", "Папоротник", ItemCategory.LEAVES, R.drawable.leaf_fern)
     )
     
     val itemCount = when {
