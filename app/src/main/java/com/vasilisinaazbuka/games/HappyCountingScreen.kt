@@ -2,10 +2,13 @@ package com.vasilisinaazbuka.games
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -14,12 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -58,8 +60,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
     var selectedObject by remember { mutableStateOf(currentLevel.objects.random()) }
     var options by remember { mutableStateOf(generateOptions(targetCount, currentLevel.maxCount)) }
     
-    var bimEmotion by remember { mutableStateOf("🐶🤔") }
-    var kuzyaEmotion by remember { mutableStateOf("👦😊") }
+    var bimEmotion by remember { mutableIntStateOf(R.drawable.bim_neutral) }
+    var kuzyaEmotion by remember { mutableIntStateOf(R.drawable.kuzya_normal) }
     var showFeedback by remember { mutableStateOf("") }
     var isCorrectAnswer by remember { mutableStateOf<Boolean?>(null) }
     var showCelebration by remember { mutableStateOf(false) }
@@ -98,8 +100,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
         targetCount = Random.nextInt(levelConfig.minCount, levelConfig.maxCount + 1)
         selectedObject = levelConfig.objects.random()
         options = generateOptions(targetCount, levelConfig.maxCount)
-        bimEmotion = "🐶🤔"
-        kuzyaEmotion = "👦😊"
+        bimEmotion = R.drawable.bim_neutral
+        kuzyaEmotion = R.drawable.kuzya_normal
     }
     
     LaunchedEffect(showFeedback) {
@@ -120,26 +122,30 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
             delay(1500)
             level++
             correctAnswers = 0
-            bimEmotion = "🐶🚀"
-            kuzyaEmotion = "👦🎊"
+            bimEmotion = R.drawable.bim_happy
+            kuzyaEmotion = R.drawable.kuzya_celebrating
             showFeedback = "🎊 Новый уровень! ${levels.getOrElse(level - 1) { levels.last() }.description}"
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE3F2FD),
-                        Color(0xFFBBDEFB),
-                        Color(0xFF90CAF9),
-                        Color(0xFF64B5F6)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
+        Image(
+            painter = painterResource(id = R.drawable.background_counting),
+            contentDescription = "Фон счёта",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Полупрозрачный слой
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x30000000))
+        )
+        
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -215,10 +221,13 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Card(
                     modifier = Modifier
                         .size(100.dp)
@@ -231,7 +240,12 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = kuzyaEmotion, fontSize = 60.sp)
+                        Image(
+                            painter = painterResource(id = kuzyaEmotion),
+                            contentDescription = "Кузя",
+                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
                 }
                 
@@ -252,22 +266,32 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = bimEmotion, fontSize = 60.sp)
+                        Image(
+                            painter = painterResource(id = bimEmotion),
+                            contentDescription = "Бим",
+                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("Бим", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             Column(
                 modifier = Modifier
                     .weight(2f)
                     .fillMaxHeight()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -289,10 +313,12 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                     }
                 }
                 
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.4f),
+                        .height(200.dp),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -402,8 +428,18 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                             else -> 30
                                         }
                                         score += points
-                                        bimEmotion = listOf("🐶🎉", "🐶❤️", "🐶😊", "🐶🌟").random()
-                                        kuzyaEmotion = listOf("👦😄", "👦👍", "👦🎉", "👦💪").random()
+                                        bimEmotion = listOf(
+                                            R.drawable.bim_happy,
+                                            R.drawable.bim_love,
+                                            R.drawable.bim_play,
+                                            R.drawable.bim_happy
+                                        ).random()
+                                        kuzyaEmotion = listOf(
+                                            R.drawable.kuzya_happy,
+                                            R.drawable.kuzya_celebrating,
+                                            R.drawable.kuzya_happy,
+                                            R.drawable.kuzya_celebrating
+                                        ).random()
                                         showFeedback = listOf(
                                             "✅ Правильно! +$points",
                                             "🌟 Молодец! +$points",
@@ -413,8 +449,12 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                         showCelebration = true
                                     } else {
                                         isCorrectAnswer = false
-                                        bimEmotion = listOf("🐶😢", "🐶🤨", "🐶😅").random()
-                                        kuzyaEmotion = "👦🤔"
+                                        bimEmotion = listOf(
+                                            R.drawable.bim_sad,
+                                            R.drawable.bim_scared,
+                                            R.drawable.bim_surprised
+                                        ).random()
+                                        kuzyaEmotion = R.drawable.kuzya_thinking
                                         showFeedback = listOf(
                                             "❌ Не совсем! Попробуй ещё",
                                             "🤔 Подумай ещё разок",
@@ -466,6 +506,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
