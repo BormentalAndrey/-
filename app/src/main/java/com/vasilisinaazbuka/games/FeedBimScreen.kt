@@ -1,24 +1,24 @@
 package com.vasilisinaazbuka.games
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,42 +34,46 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
     var energy by remember { mutableFloatStateOf(50f) }
     var currentTab by remember { mutableIntStateOf(0) }
     
-    // Состояние для анимаций и обратной связи
     var showReaction by remember { mutableStateOf("") }
     var showHearts by remember { mutableStateOf(false) }
+    var showReactionImage by remember { mutableStateOf<Int?>(null) }
     
-    // Автоматическое уменьшение характеристик со временем
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000) // Каждые 5 секунд
+            delay(5000)
             fullness = (fullness - 1f).coerceAtLeast(0f)
             happiness = (happiness - 0.5f).coerceAtLeast(0f)
             energy = (energy - 0.5f).coerceAtLeast(0f)
         }
     }
     
-    // Автоматическое скрытие реакции
     LaunchedEffect(showReaction) {
         if (showReaction.isNotEmpty()) {
             delay(2000)
             showReaction = ""
             showHearts = false
+            showReactionImage = null
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE8F5E9),
-                        Color(0xFFC8E6C9),
-                        Color(0xFFA5D6A7)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
+        Image(
+            painter = painterResource(id = R.drawable.background_feed),
+            contentDescription = "Фон кормления",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Полупрозрачный слой
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x20000000))
+        )
+        
         // Кнопка Назад
         IconButton(
             onClick = onBackClick,
@@ -90,7 +94,21 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
         }
 
         // Реакция Бима (всплывающая эмоция)
-        if (showReaction.isNotEmpty()) {
+        if (showReactionImage != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 40.dp, top = 100.dp)
+                    .zIndex(200f)
+            ) {
+                Image(
+                    painter = painterResource(id = showReactionImage!!),
+                    contentDescription = "Реакция Бима",
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        } else if (showReaction.isNotEmpty()) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -135,11 +153,14 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                     .padding(16.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.White.copy(alpha = 0.7f))
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Анимированный Бим
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Бим с картинкой
                 Card(
                     modifier = Modifier
                         .size(140.dp)
@@ -152,15 +173,19 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = when {
-                                fullness > 80 && happiness > 80 -> "🐶❤️"
-                                fullness < 30 -> "🐶😢"
-                                energy < 30 -> "🐶😴"
-                                happiness > 70 -> "🐶😊"
-                                else -> "🐶😐"
-                            },
-                            fontSize = 80.sp
+                        Image(
+                            painter = painterResource(
+                                id = when {
+                                    fullness > 80 && happiness > 80 -> R.drawable.bim_love
+                                    fullness < 30 -> R.drawable.bim_sad
+                                    energy < 30 -> R.drawable.bim_sleepy
+                                    happiness > 70 -> R.drawable.bim_happy
+                                    else -> R.drawable.bim_neutral
+                                }
+                            ),
+                            contentDescription = "Бим",
+                            modifier = Modifier.fillMaxSize().padding(8.dp),
+                            contentScale = ContentScale.Fit
                         )
                     }
                 }
@@ -194,6 +219,8 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                 StatBarEnhanced("🍖 Сытость", fullness, Color(0xFF4CAF50), Color(0xFF2E7D32))
                 StatBarEnhanced("😊 Счастье", happiness, Color(0xFFFFC107), Color(0xFFFF8F00))
                 StatBarEnhanced("⚡ Энергия", energy, Color(0xFF2196F3), Color(0xFF1565C0))
+                
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // 2/3 экрана: Взаимодействие
@@ -246,11 +273,13 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                             fullness = (fullness + 20f).coerceAtMost(100f)
                             happiness = (happiness + 5f).coerceAtMost(100f)
                             showReaction = "😋 Вкусно!"
+                            showReactionImage = R.drawable.bim_happy
                             showHearts = true
                         },
                         onOverfeed = {
                             fullness = (fullness + 10f).coerceAtMost(100f)
                             showReaction = "😖 Больше не могу..."
+                            showReactionImage = R.drawable.bim_sick
                         }
                     )
                     1 -> PlayPanel(
@@ -258,6 +287,7 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                             happiness = (happiness + 20f).coerceAtMost(100f)
                             energy = (energy - 10f).coerceAtLeast(0f)
                             showReaction = "🎉 Весело!"
+                            showReactionImage = R.drawable.bim_play
                             showHearts = true
                         }
                     )
@@ -267,16 +297,19 @@ fun FeedBimScreen(onBackClick: () -> Unit) {
                                 "sleep" -> {
                                     energy = (energy + 30f).coerceAtMost(100f)
                                     showReaction = "😴 Поспал..."
+                                    showReactionImage = R.drawable.bim_sleepy
                                 }
                                 "wash" -> {
                                     energy = (energy + 15f).coerceAtMost(100f)
                                     happiness = (happiness + 10f).coerceAtMost(100f)
                                     showReaction = "🛁 Чистый!"
+                                    showReactionImage = R.drawable.bim_happy
                                 }
                                 "heal" -> {
                                     energy = (energy + 20f).coerceAtMost(100f)
                                     fullness = (fullness - 5f).coerceAtLeast(0f)
                                     showReaction = "💊 Полегчало!"
+                                    showReactionImage = R.drawable.bim_happy
                                 }
                             }
                             showHearts = true
@@ -306,7 +339,9 @@ fun FoodPanel(onFeed: (String) -> Unit, onOverfeed: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -320,7 +355,6 @@ fun FoodPanel(onFeed: (String) -> Unit, onOverfeed: () -> Unit) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Сетка с едой
             foods.chunked(3).forEach { rowItems ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -358,7 +392,6 @@ fun FoodPanel(onFeed: (String) -> Unit, onOverfeed: () -> Unit) {
                 }
             }
             
-            // Кнопка перекорма (пасхалка)
             TextButton(
                 onClick = onOverfeed,
                 modifier = Modifier.fillMaxWidth()
@@ -391,7 +424,9 @@ fun PlayPanel(onPlay: (String) -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -463,7 +498,9 @@ fun CarePanel(onCare: (String) -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
