@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 data class CountObject(
@@ -52,6 +50,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
     var lives by remember { mutableIntStateOf(3) }
     var showInstructions by remember { mutableStateOf(true) }
     var isGameOver by remember { mutableStateOf(false) }
+    var showNextButton by remember { mutableStateOf(false) }
     
     val allObjects = listOf(
         CountObject("🎾", "Мячики", R.drawable.item_ball),
@@ -126,6 +125,11 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
         bimEmotion = R.drawable.bim_happy
         kuzyaEmotion = R.drawable.kuzya_normal
         wrongAttempts = 0
+        showNextButton = false
+        isCorrectAnswer = null
+        selectedOption = null
+        showFeedback = ""
+        showCelebration = false
     }
     
     fun resetGame() {
@@ -136,41 +140,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
         lives = 3
         isGameOver = false
         wrongAttempts = 0
+        showNextButton = false
         generateNewRound(levels[0])
-    }
-    
-    LaunchedEffect(showFeedback) {
-        if (showFeedback.isNotEmpty()) {
-            delay(2000)
-            showFeedback = ""
-            if (isCorrectAnswer == true) {
-                showCelebration = false
-                generateNewRound(currentLevel)
-            } else {
-                selectedOption = null
-                if (wrongAttempts >= 2 && lives > 0) {
-                    lives--
-                    if (lives <= 0) {
-                        isGameOver = true
-                    } else {
-                        generateNewRound(currentLevel)
-                    }
-                }
-            }
-            isCorrectAnswer = null
-        }
-    }
-    
-    LaunchedEffect(correctAnswers) {
-        if (correctAnswers >= 3 * level && level < levels.size && isCorrectAnswer == true) {
-            delay(1500)
-            level++
-            correctAnswers = 0
-            lives = 3
-            bimEmotion = R.drawable.bim_happy
-            kuzyaEmotion = R.drawable.kuzya_happy
-            showFeedback = "🎊 Новый уровень! ${levels.getOrElse(level - 1) { levels.last() }.description}"
-        }
     }
 
     Box(
@@ -249,8 +220,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 .zIndex(100f)
                 .padding(16.dp)
                 .size(48.dp)
-                .shadow(4.dp, CircleShape)
-                .background(Color.White.copy(alpha = 0.9f), CircleShape)
+                .shadow(4.dp, RoundedCornerShape(12.dp))
+                .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(12.dp))
         ) {
             Icon(
                 Icons.Default.Close,
@@ -300,6 +271,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(top = 100.dp)
         ) {
+            // Левая панель - персонажи
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -311,59 +283,46 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Card(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .scale(kuzyaBounce),
-                    shape = CircleShape,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                // Кузя и Бим рядом
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Image(
-                            painter = painterResource(id = kuzyaEmotion),
-                            contentDescription = "Кузя",
-                            modifier = Modifier.fillMaxSize().padding(12.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Кузя", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .scale(bimScale),
-                    shape = CircleShape,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                        // Бим
                         Image(
                             painter = painterResource(id = bimEmotion),
                             contentDescription = "Бим",
-                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                            modifier = Modifier
+                                .size(90.dp)
+                                .scale(bimScale),
+                            contentScale = ContentScale.Fit
+                        )
+                        // Кузя
+                        Image(
+                            painter = painterResource(id = kuzyaEmotion),
+                            contentDescription = "Кузя",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .scale(kuzyaBounce),
                             contentScale = ContentScale.Fit
                         )
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Кузя и Бим",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1565C0)
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Бим", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
                 
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            // Правая панель - игра
             Column(
                 modifier = Modifier
                     .weight(2f)
@@ -401,7 +360,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(180.dp),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -445,11 +404,8 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                AnimatedVisibility(
-                    visible = showFeedback.isNotEmpty(),
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut()
-                ) {
+                // Обратная связь
+                if (showFeedback.isNotEmpty()) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -477,10 +433,11 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                             textAlign = TextAlign.Center
                         )
                     }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                
+                // Кнопки с вариантами
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -503,7 +460,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                         
                         Button(
                             onClick = { 
-                                if (selectedOption == null || isWrongOption) {
+                                if ((isCorrectAnswer == null || isWrongOption) && !showNextButton) {
                                     selectedOption = option
                                     totalAttempts++
                                     
@@ -511,20 +468,15 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                         isCorrectAnswer = true
                                         correctAnswers++
                                         wrongAttempts = 0
+                                        showNextButton = true
                                         val points = when {
                                             level <= 2 -> 10
                                             level <= 4 -> 20
                                             else -> 30
                                         }
                                         score += points
-                                        bimEmotion = listOf(
-                                            R.drawable.bim_happy, R.drawable.bim_love,
-                                            R.drawable.bim_play, R.drawable.bim_happy
-                                        ).random()
-                                        kuzyaEmotion = listOf(
-                                            R.drawable.kuzya_happy, R.drawable.kuzya_happy,
-                                            R.drawable.kuzya_happy, R.drawable.kuzya_happy
-                                        ).random()
+                                        bimEmotion = R.drawable.bim_happy
+                                        kuzyaEmotion = R.drawable.kuzya_happy
                                         showFeedback = listOf(
                                             "✅ Правильно! +$points",
                                             "🌟 Молодец! +$points",
@@ -532,17 +484,31 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                             "💫 Отлично! +$points"
                                         ).random()
                                         showCelebration = true
+                                        
+                                        // Проверка на новый уровень
+                                        if (correctAnswers >= 3 * level && level < levels.size) {
+                                            level++
+                                            correctAnswers = 0
+                                            lives = 3
+                                            showFeedback += "\n🎊 Новый уровень! ${levels.getOrElse(level - 1) { levels.last() }.description}"
+                                        }
                                     } else {
                                         wrongAttempts++
                                         isCorrectAnswer = false
-                                        bimEmotion = listOf(
-                                            R.drawable.bim_sad, R.drawable.bim_scared, R.drawable.bim_surprised
-                                        ).random()
+                                        bimEmotion = R.drawable.bim_sad
                                         kuzyaEmotion = R.drawable.kuzya_thinking
                                         showFeedback = if (wrongAttempts >= 2) {
-                                            "❌ Мимо! Осталось попыток: 0. Новая жизнь!"
+                                            lives--
+                                            if (lives <= 0) {
+                                                isGameOver = true
+                                                "💔 Жизни закончились!"
+                                            } else {
+                                                wrongAttempts = 0
+                                                showNextButton = true
+                                                "❌ Две ошибки! -1 жизнь (❤️ x$lives)"
+                                            }
                                         } else {
-                                            "❌ Неверно! Попробуй ещё (${3 - wrongAttempts} попытки)"
+                                            "❌ Неверно! Попытка ${wrongAttempts}/2"
                                         }
                                     }
                                 }
@@ -552,7 +518,7 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                                 .scale(buttonScale)
                                 .shadow(8.dp, RoundedCornerShape(16.dp)),
                             shape = RoundedCornerShape(16.dp),
-                            enabled = isCorrectAnswer == null || isWrongOption || isCorrectOption,
+                            enabled = !showNextButton && (isCorrectAnswer == null || isWrongOption || isCorrectOption),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = when {
                                     isCorrectOption -> Color(0xFF4CAF50)
@@ -581,9 +547,39 @@ fun HappyCountingScreen(onBackClick: () -> Unit) {
                     }
                 }
                 
-                if (totalAttempts >= 2 && isCorrectAnswer == null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Кнопка "Следующий вопрос" или "Продолжить"
+                if (showNextButton) {
+                    Button(
+                        onClick = {
+                            if (isGameOver) {
+                                resetGame()
+                            } else {
+                                generateNewRound(currentLevel)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isGameOver) Color(0xFFF44336) else Color(0xFF4CAF50)
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                    ) {
+                        Text(
+                            text = if (isGameOver) "🔄 Играть снова" else "Далее ▶️",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+                
+                if (totalAttempts >= 2 && isCorrectAnswer == null && !showNextButton) {
                     Text(
-                        text = "💡 Подсказка: попробуй посчитать пальчиком каждый предмет",
+                        text = "💡 Подсказка: посчитай пальчиком каждый предмет",
                         fontSize = 14.sp,
                         color = Color(0xFF1565C0),
                         textAlign = TextAlign.Center,
