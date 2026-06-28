@@ -2,6 +2,7 @@ package com.vasilisinaazbuka.games
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,8 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,8 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -87,19 +91,23 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1B5E20),
-                        Color(0xFF2E7D32),
-                        Color(0xFF4CAF50),
-                        Color(0xFF81C784)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
+        Image(
+            painter = painterResource(id = R.drawable.background_forest),
+            contentDescription = "Лесной фон",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Полупрозрачный слой
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x40000000))
+        )
+        
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -187,9 +195,12 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp, bottom = 16.dp),
+                .padding(top = 100.dp, bottom = 16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            
             Text(
                 text = "🌲 Собери находки в лесу! 🌲",
                 fontSize = 28.sp,
@@ -235,7 +246,7 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.4f)
+                        .heightIn(min = 200.dp, max = 300.dp)
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -276,7 +287,7 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.4f)
+                        .heightIn(min = 200.dp, max = 300.dp)
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -326,7 +337,7 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
+                    .heightIn(min = 250.dp, max = 400.dp)
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -388,6 +399,8 @@ fun ForestSortScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
     
