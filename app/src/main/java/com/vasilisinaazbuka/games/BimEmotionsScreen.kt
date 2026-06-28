@@ -51,6 +51,8 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
     var isCorrectAnswer by remember { mutableStateOf<Boolean?>(null) }
     var options by remember { mutableStateOf(generateOptions(emotionsList, currentEmotion)) }
     var showNextButton by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf<Emotion?>(null) }
+    var wrongOption by remember { mutableStateOf<Emotion?>(null) }
     
     val feedbackScale by animateFloatAsState(
         targetValue = if (isCorrectAnswer != null) 1.1f else 1f,
@@ -134,6 +136,7 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(32.dp))
             
+            // Обратная связь
             if (isCorrectAnswer != null) {
                 Card(
                     modifier = Modifier
@@ -149,7 +152,7 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                 ) {
                     Text(
                         text = if (isCorrectAnswer == true) "✅ Правильно! Это ${currentEmotion.name}"
-                               else "❌ Попробуй ещё раз!",
+                               else "❌ Неправильно! Попробуй другой вариант",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCorrectAnswer == true) Color(0xFF2E7D32) else Color(0xFFC62828),
@@ -161,18 +164,28 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
             
+            // Кнопки с вариантами
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 options.forEach { option ->
+                    val isThisSelected = selectedOption == option
+                    val isThisWrong = wrongOption == option
+                    
                     Button(
                         onClick = {
-                            if (option == currentEmotion) {
-                                isCorrectAnswer = true
-                                showNextButton = true
-                            } else {
-                                isCorrectAnswer = false
+                            if (!showNextButton) {
+                                selectedOption = option
+                                if (option == currentEmotion) {
+                                    isCorrectAnswer = true
+                                    showNextButton = true
+                                    wrongOption = null
+                                } else {
+                                    isCorrectAnswer = false
+                                    wrongOption = option
+                                    // Разрешаем попробовать снова
+                                }
                             }
                         },
                         modifier = Modifier
@@ -180,21 +193,31 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                             .height(70.dp)
                             .padding(horizontal = 4.dp),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = isCorrectAnswer == null,
+                        enabled = !showNextButton && !isThisWrong,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE65100)
+                            containerColor = when {
+                                isThisSelected && isCorrectAnswer == true -> Color(0xFF4CAF50)
+                                isThisWrong -> Color(0xFFBDBDBD)
+                                else -> Color(0xFFE65100)
+                            },
+                            disabledContainerColor = when {
+                                isThisSelected && isCorrectAnswer == true -> Color(0xFF4CAF50)
+                                isThisWrong -> Color(0xFFE0E0E0)
+                                else -> Color(0xFFFFCDD2)
+                            }
                         )
                     ) {
                         Text(
                             option.name,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color.White
+                            color = if (isThisWrong) Color.Gray else Color.White
                         )
                     }
                 }
             }
             
+            // Кнопка "Далее"
             if (showNextButton) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
@@ -203,6 +226,8 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                         options = generateOptions(emotionsList, currentEmotion)
                         isCorrectAnswer = null
                         showNextButton = false
+                        selectedOption = null
+                        wrongOption = null
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50)
@@ -210,6 +235,17 @@ fun BimEmotionsScreen(onBackClick: () -> Unit) {
                 ) {
                     Text("Далее ▶️", fontSize = 20.sp)
                 }
+            }
+            
+            // Подсказка если несколько раз неверно
+            if (wrongOption != null && !showNextButton) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "💡 Посмотри внимательно на картинку Бима!",
+                    fontSize = 14.sp,
+                    color = Color(0xFF1565C0),
+                    textAlign = TextAlign.Center
+                )
             }
             
             Spacer(modifier = Modifier.height(16.dp))
