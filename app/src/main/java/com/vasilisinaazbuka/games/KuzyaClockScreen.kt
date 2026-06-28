@@ -3,6 +3,7 @@ package com.vasilisinaazbuka.games
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,8 +11,10 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -25,6 +28,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -97,18 +102,23 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFFFF3E0),
-                        Color(0xFFFFE0B2),
-                        Color(0xFFFFCC80)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
+        Image(
+            painter = painterResource(id = R.drawable.background_clock),
+            contentDescription = "Фон часов",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Полупрозрачный слой
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x30000000))
+        )
+        
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },
@@ -159,7 +169,8 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
@@ -305,6 +316,8 @@ fun KuzyaClockScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
